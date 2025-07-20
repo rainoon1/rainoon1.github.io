@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>拼图游戏 - 摸鱼游戏小站</title>
+  <link rel="stylesheet" href="../../style.css">
+  <style>body { background: #e8f5e9; }</style>
+</head>
+<body>
+  <canvas id="gravity-bg" style="position:fixed;z-index:-1;top:0;left:0;width:100vw;height:100vh;"></canvas>
+  <div style="text-align:center;margin:32px 0;">
+    <a href="../../index.html" class="button">返回大厅</a>
+    <h2 style="margin:16px 0 24px;">拼图游戏</h2>
+  </div>
+  <div id="puzzle-ctrl" style="max-width:600px;margin:0 auto 24px;display:flex;flex-wrap:wrap;gap:16px;justify-content:center;align-items:center;"></div>
+  <div id="puzzle-main" style="max-width:600px;margin:0 auto;"></div>
+  <div id="puzzle-info" style="text-align:center;margin:24px 0;"></div>
+  <script src="../../gravity-balls.js"></script>
+  <script src="puzzle.js"></script>
+</body>
+</html> 
