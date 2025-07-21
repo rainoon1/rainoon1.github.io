@@ -25,16 +25,16 @@ function getOffWorkTime() {
 function updateCountdown() {
   const { hour, minute } = getUserOffWorkTime();
   const now = new Date();
-  const target = getOffWorkTime();
-  let diff = Math.max(0, target - now);
-  let hours = Math.floor(diff / 3600000);
-  let minutes = Math.floor((diff % 3600000) / 60000);
-  let seconds = Math.floor((diff % 60000) / 1000);
+  const offWork = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute, 0);
   let text = '';
-  if (now.getHours() < hour || (now.getHours() === hour && now.getMinutes() < minute)) {
+  if (now < offWork) {
+    let diff = Math.max(0, offWork - now);
+    let hours = Math.floor(diff / 3600000);
+    let minutes = Math.floor((diff % 3600000) / 60000);
+    let seconds = Math.floor((diff % 60000) / 1000);
     text = `距离下班还有: ${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
   } else {
-    text = `距离明天上班还有: ${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+    text = '下班快乐！';
   }
   document.querySelector('.countdown').textContent = text;
 }

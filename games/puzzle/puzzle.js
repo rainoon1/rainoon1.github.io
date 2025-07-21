@@ -18,6 +18,56 @@ let state = {
   solved: false
 };
 
+function renderTips() {
+  const tips = document.getElementById('puzzle-tips');
+  if (!tips) return;
+  let desc = '';
+  if (state.type === 'number') {
+    desc = `<b>数字拼图玩法：</b><br><br>
+      将打乱的数字方块通过点击相邻空格移动，按顺序排列为 1~N，空格在最后一格即为完成。<br><br>
+      支持 3x3、4x4、5x5 难度。步数越少越好！`;
+  } else {
+    desc = `<b>图片拼图玩法：</b><br><br>
+      将打乱的图片碎片通过点击相邻空格移动，拼回原图。<br><br>
+      可选择内置图片或上传自定义图片。支持多种难度。步数越少越好！`;
+  }
+  tips.innerHTML = desc + `<div style='margin-top:18px;text-align:right;'><button id='puzzle-help-btn' class='button' style='font-size:0.95em;padding:6px 16px;'>帮助</button></div>`;
+  const helpBtn = document.getElementById('puzzle-help-btn');
+  if (helpBtn) {
+    helpBtn.onclick = function() {
+      showPuzzleHelp();
+    };
+  }
+}
+
+function showPuzzleHelp() {
+  // 自定义弹窗
+  let dialog = document.getElementById('puzzle-help-dialog');
+  if (!dialog) {
+    dialog = document.createElement('div');
+    dialog.id = 'puzzle-help-dialog';
+    dialog.style.position = 'fixed';
+    dialog.style.left = '50%';
+    dialog.style.top = '50%';
+    dialog.style.transform = 'translate(-50%, -50%)';
+    dialog.style.background = 'rgba(255,255,255,0.98)';
+    dialog.style.boxShadow = '0 8px 32px rgba(76,175,80,0.18)';
+    dialog.style.borderRadius = '18px';
+    dialog.style.padding = '36px 28px 28px 28px';
+    dialog.style.zIndex = '2000';
+    dialog.style.textAlign = 'center';
+    dialog.style.fontSize = '1.15em';
+    dialog.style.color = '#388e3c';
+    dialog.innerHTML = `
+      <div style='font-size:1.25em;font-weight:bold;margin-bottom:12px;'>拼图类游戏终极技巧</div>
+      <div style='margin-bottom:18px;'>按顺序移动图片时，临边的数字需要和前一个数字一起移进去，例如 3*3 中的 23 47；4*4 中的 34 78 9 和 13 等。</div>
+      <button class='button' id='puzzle-help-close'>关闭</button>
+    `;
+    document.body.appendChild(dialog);
+    document.getElementById('puzzle-help-close').onclick = () => dialog.remove();
+  }
+}
+
 function renderCtrl() {
   const ctrl = document.getElementById('puzzle-ctrl');
   ctrl.innerHTML = `
@@ -43,7 +93,7 @@ function renderCtrl() {
     <button class="button" id="puzzle-reset">重置</button>
   `;
   document.getElementById('puzzle-size').onchange = e => { state.size = +e.target.value; startGame(); };
-  document.getElementById('puzzle-type').onchange = e => { state.type = e.target.value; renderCtrl(); startGame(); };
+  document.getElementById('puzzle-type').onchange = e => { state.type = e.target.value; renderTips(); renderCtrl(); startGame(); };
   if (state.type === 'image') {
     document.getElementById('puzzle-img-select').onchange = e => { state.image = e.target.value; state.customImage = null; startGame(); };
     document.getElementById('puzzle-img-upload').onchange = e => handleUpload(e);
@@ -84,6 +134,7 @@ function startGame() {
       state.blockMap.push({x, y, idx: (y * state.size + x)});
     }
   }
+  renderTips();
   renderCtrl();
   renderBoard();
   renderInfo();
