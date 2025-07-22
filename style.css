@@ -57,3 +57,77 @@
   box-shadow: 0 2px 8px rgba(76,175,80,0.18);
   background: #f1f8e9;
 } 
+
+/* 拼图游戏自适应布局 */
+.puzzle-content-flex {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 32px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.puzzle-tips-box {
+  flex: 0 0 220px;
+  min-width: 180px;
+  max-width: 260px;
+  background: #f8fff5;
+  border-radius: 10px;
+  padding: 18px 16px 16px 16px;
+  box-shadow: 0 2px 8px rgba(76,175,80,0.08);
+  font-size: 1em;
+  color: #388e3c;
+  margin-bottom: 24px;
+}
+@media (max-width: 700px) {
+  .puzzle-content-flex {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+    max-width: 100vw;
+    padding: 0 4vw;
+  }
+  .puzzle-tips-box {
+    max-width: 100%;
+    min-width: 0;
+    margin-bottom: 10px;
+    font-size: 0.98em;
+    padding: 12px 10px 10px 10px;
+  }
+} 
+
+/* 3秒挑战（掐秒表）移动端适配 */
+@media (max-width: 600px) {
+  #stopwatch-view > div {
+    flex-direction: column !important;
+    gap: 8px !important;
+    max-width: 98vw !important;
+    align-items: stretch !important;
+  }
+  #stopwatch-view .puzzle-tips-box {
+    max-width: 100% !important;
+  }
+  #stopwatch-timer {
+    font-size: 2em !important;
+    padding: 12px 0 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+  #stopwatch-btn {
+    width: 100% !important;
+    font-size: 1.1em !important;
+    padding: 10px 0 !important;
+    margin: 0 auto !important;
+  }
+  #stopwatch-best {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 auto 8px auto !important;
+    font-size: 1.08em !important;
+    padding: 10px 0 8px 0 !important;
+  }
+  #stopwatch-result {
+    font-size: 1.2em !important;
+  }
+} 

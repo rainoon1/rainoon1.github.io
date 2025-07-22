@@ -53,14 +53,16 @@ function showPuzzleHelp() {
     dialog.style.background = 'rgba(255,255,255,0.98)';
     dialog.style.boxShadow = '0 8px 32px rgba(76,175,80,0.18)';
     dialog.style.borderRadius = '18px';
-    dialog.style.padding = '36px 28px 28px 28px';
+    dialog.style.padding = '32px 18px 22px 18px';
     dialog.style.zIndex = '2000';
     dialog.style.textAlign = 'center';
     dialog.style.fontSize = '1.15em';
     dialog.style.color = '#388e3c';
+    dialog.style.width = '90vw';
+    dialog.style.maxWidth = '360px';
     dialog.innerHTML = `
       <div style='font-size:1.25em;font-weight:bold;margin-bottom:12px;'>拼图类游戏终极技巧</div>
-      <div style='margin-bottom:18px;'>按顺序移动图片时，临边的数字需要和前一个数字一起移进去，例如 3*3 中的 23 47；4*4 中的 34 78 9 和 13 等。</div>
+      <div style='margin-bottom:18px;line-height:1.7;'>按顺序移动图片时，<br>临边的数字需要和前一个数字一起移进去。<br>例如 3*3 中的 23、47；<br>4*4 中的 34、78、9 和 13 等。</div>
       <button class='button' id='puzzle-help-close'>关闭</button>
     `;
     document.body.appendChild(dialog);
