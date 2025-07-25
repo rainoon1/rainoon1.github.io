@@ -46,6 +46,8 @@ let state = {
 function renderTips() {
   const tips = document.getElementById('puzzle-tips');
   if (!tips) return;
+  // 判断是否移动端
+  const isMobile = window.innerWidth <= 700;
   let desc = '';
   if (state.type === 'number') {
     desc = `<b>数字拼图玩法：</b><br><br>
@@ -56,12 +58,46 @@ function renderTips() {
       将打乱的图片碎片通过点击相邻空格移动，拼回原图。<br><br>
       可选择内置图片或上传自定义图片。支持多种难度。步数越少越好！`;
   }
-  tips.innerHTML = desc + `<div style='margin-top:18px;text-align:right;'><button id='puzzle-help-btn' class='button' style='font-size:0.95em;padding:6px 16px;'>帮助</button></div>`;
-  const helpBtn = document.getElementById('puzzle-help-btn');
-  if (helpBtn) {
-    helpBtn.onclick = function() {
-      showPuzzleHelp();
-    };
+  if (isMobile) {
+    tips.innerHTML = `<div style='font-weight:bold;font-size:1.1em;margin-bottom:8px;'>玩法简介</div><button id='puzzle-tips-expand' class='button' style='font-size:0.95em;padding:6px 16px;'>展开说明</button>`;
+    const btn = document.getElementById('puzzle-tips-expand');
+    if (btn) {
+      btn.onclick = function() {
+        showTipsDialog(desc);
+      };
+    }
+  } else {
+    tips.innerHTML = desc + `<div style='margin-top:18px;text-align:right;'><button id='puzzle-help-btn' class='button' style='font-size:0.95em;padding:6px 16px;'>帮助</button></div>`;
+    const helpBtn = document.getElementById('puzzle-help-btn');
+    if (helpBtn) {
+      helpBtn.onclick = function() {
+        showPuzzleHelp();
+      };
+    }
+  }
+}
+
+function showTipsDialog(html) {
+  let dialog = document.getElementById('puzzle-tips-dialog');
+  if (!dialog) {
+    dialog = document.createElement('div');
+    dialog.id = 'puzzle-tips-dialog';
+    dialog.style.position = 'fixed';
+    dialog.style.left = '50%';
+    dialog.style.top = '50%';
+    dialog.style.transform = 'translate(-50%, -50%)';
+    dialog.style.background = 'rgba(255,255,255,0.98)';
+    dialog.style.boxShadow = '0 8px 32px rgba(76,175,80,0.18)';
+    dialog.style.borderRadius = '18px';
+    dialog.style.padding = '28px 18px 18px 18px';
+    dialog.style.zIndex = '2100';
+    dialog.style.textAlign = 'left';
+    dialog.style.fontSize = '1.08em';
+    dialog.style.color = '#388e3c';
+    dialog.style.maxWidth = '90vw';
+    dialog.innerHTML = `<div style='font-weight:bold;font-size:1.15em;margin-bottom:12px;'>玩法说明</div><div style='margin-bottom:18px;'>${html}</div><button class='button' id='puzzle-tips-close'>关闭</button>`;
+    document.body.appendChild(dialog);
+    document.getElementById('puzzle-tips-close').onclick = () => dialog.remove();
   }
 }
 
@@ -97,36 +133,36 @@ function showPuzzleHelp() {
 
 async function renderCtrl() {
   const ctrl = document.getElementById('puzzle-ctrl');
-  let imgDirSel = '', imgSel = '';
+  let imgDirSel = '', imgSel = '', imgUploadSel = '';
   if (state.type === 'image') {
     const libs = await loadImageLibrary();
-    // 目录选择
-    imgDirSel = `<label>图库：<select id="puzzle-img-dir">${libs.map((lib, i) => `<option value="${i}"${state.imgDirIdx===i?' selected':''}>${lib.label}</option>`).join('')}</select></label>`;
-    // 图片选择
+    imgDirSel = `<label style="margin-right:0.8em;">图库：<select id="puzzle-img-dir">${libs.map((lib, i) => `<option value="${i}"${state.imgDirIdx===i?' selected':''}>${lib.label}</option>`).join('')}</select></label>`;
     const dirIdx = state.imgDirIdx ?? 0;
     const imgs = libs[dirIdx].images;
-    // 若当前图片不在新图片库，自动选第一个
     if (!imgs.includes(state.image)) state.image = imgs[0] || '';
     imgSel = `<label>图片：<select id="puzzle-img-select">${imgs.map((img, i) => `<option value="${img}"${img===state.image?' selected':''}>${img.split('/').pop()}</option>`).join('')}</select></label>`;
+    imgUploadSel = `<label>或上传：<input type="file" id="puzzle-img-upload" accept="image/jpeg,image/png,image/webp"></label>`;
   }
   ctrl.innerHTML = `
-    <label>难度：
-      <select id="puzzle-size">${puzzleConfig.sizes.map(s => `<option value="${s}"${s===state.size?' selected':''}>${s}×${s}</option>`).join('')}</select>
-    </label>
-    <label>类型：
-      <select id="puzzle-type">
-        <option value="number"${state.type==='number'?' selected':''}>数字拼图</option>
-        <option value="image"${state.type==='image'?' selected':''}>图片拼图</option>
-      </select>
-    </label>
-    <span id="puzzle-img-ctrl" style="display:${state.type==='image'?'inline-block':'none'};">
-      ${imgDirSel}
-      ${imgSel}
-      <label>或上传：
-        <input type="file" id="puzzle-img-upload" accept="image/jpeg,image/png,image/webp">
-      </label>
-    </span>
-    <button class="button" id="puzzle-reset">重置</button>
+    <div style="display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center;justify-content:center;">
+      <div style="display:flex;align-items:center;gap:0.8em;"> 
+        <label>难度：
+          <select id="puzzle-size">${puzzleConfig.sizes.map(s => `<option value="${s}"${s===state.size?' selected':''}>${s}×${s}</option>`).join('')}</select>
+        </label>
+        <label>类型：
+          <select id="puzzle-type">
+            <option value="number"${state.type==='number'?' selected':''}>数字拼图</option>
+            <option value="image"${state.type==='image'?' selected':''}>图片拼图</option>
+          </select>
+        </label>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.8em;${state.type!=='image'?'display:none;':''}">
+        ${imgDirSel}
+        ${imgSel}
+      </div>
+      <div style="${state.type!=='image'?'display:none;':''}">${imgUploadSel}</div>
+      <button class="button" id="puzzle-reset">重置</button>
+    </div>
   `;
   document.getElementById('puzzle-size').onchange = e => { state.size = +e.target.value; startGame(); };
   document.getElementById('puzzle-type').onchange = e => { state.type = e.target.value; startGame(); };
@@ -228,11 +264,20 @@ function findEmpty(board) {
   }
 }
 
+let isPuzzleFullscreen = false;
+
 function renderBoard() {
   const main = document.getElementById('puzzle-main');
   const size = state.size;
+  // 全屏按钮
+  let fullscreenBtn = '';
+  if (!isPuzzleFullscreen) {
+    fullscreenBtn = `<button id="puzzle-fullscreen-btn" class="button" style="position:absolute;right:8px;top:8px;z-index:10;font-size:0.95em;padding:6px 16px;">全屏</button>`;
+  } else {
+    fullscreenBtn = `<button id="puzzle-exit-fullscreen-btn" class="button" style="position:absolute;right:8px;top:8px;z-index:10001;font-size:0.95em;padding:6px 16px;">退出全屏</button>`;
+  }
   // 16:9 容器
-  main.innerHTML = `<div class="puzzle-grid" style="display:grid;grid-template-columns:repeat(${size},1fr);gap:4px;user-select:none;width:100%;max-width:640px;aspect-ratio:16/9;margin:0 auto;"></div>`;
+  main.innerHTML = `<div class="puzzle-grid" style="display:grid;grid-template-columns:repeat(${size},1fr);gap:4px;user-select:none;width:100%;max-width:640px;aspect-ratio:16/9;margin:0 auto;position:relative;">${fullscreenBtn}</div>`;
   const grid = main.querySelector('.puzzle-grid');
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
@@ -254,7 +299,6 @@ function renderBoard() {
         cell.textContent = v === 0 ? '' : v;
       } else if (state.type === 'image') {
         if (v !== 0) {
-          // v: 1~N*N-1，表示原始块索引
           const idx = v - 1;
           const px = idx % size, py = Math.floor(idx / size);
           const bgImg = state.customImage || state.image;
@@ -268,6 +312,39 @@ function renderBoard() {
       grid.appendChild(cell);
     }
   }
+  // 绑定全屏按钮事件
+  if (!isPuzzleFullscreen) {
+    const btn = document.getElementById('puzzle-fullscreen-btn');
+    if (btn) btn.onclick = enterPuzzleFullscreen;
+  } else {
+    const btn = document.getElementById('puzzle-exit-fullscreen-btn');
+    if (btn) btn.onclick = exitPuzzleFullscreen;
+  }
+  // 设置全屏样式
+  const puzzleContent = document.getElementById('puzzle-content');
+  if (isPuzzleFullscreen) {
+    puzzleContent.classList.add('puzzle-fullscreen');
+    document.body.style.overflow = 'hidden';
+  } else {
+    puzzleContent.classList.remove('puzzle-fullscreen');
+    document.body.style.overflow = '';
+  }
+}
+
+function enterPuzzleFullscreen() {
+  isPuzzleFullscreen = true;
+  renderBoard();
+  // 隐藏 tips、ctrl、info 区域
+  document.getElementById('puzzle-tips').style.display = 'none';
+  document.getElementById('puzzle-ctrl').style.display = 'none';
+  document.getElementById('puzzle-info').style.display = 'none';
+}
+function exitPuzzleFullscreen() {
+  isPuzzleFullscreen = false;
+  renderBoard();
+  document.getElementById('puzzle-tips').style.display = '';
+  document.getElementById('puzzle-ctrl').style.display = '';
+  document.getElementById('puzzle-info').style.display = '';
 }
 
 function showWinDialog() {
