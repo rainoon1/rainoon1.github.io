@@ -305,10 +305,12 @@ let isPuzzleFullscreen = false;
 function getMax16by9Rect() {
   const ww = window.innerWidth;
   const wh = window.innerHeight;
+  // 移动端下最大高度为 60vh，预留顶部和按钮空间
+  const maxH = ww < 700 ? Math.floor(wh * 0.6) : wh;
   let w = ww, h = Math.round(ww * 9 / 16);
-  if (h > wh) {
-    h = wh;
-    w = Math.round(wh * 16 / 9);
+  if (h > maxH) {
+    h = maxH;
+    w = Math.round(h * 16 / 9);
   }
   return { width: w, height: h };
 }
