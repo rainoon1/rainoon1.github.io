@@ -83,7 +83,11 @@ function renderStopwatchView() {
     running = false;
     timer = 0;
     startTime = 0;
-    timerEl.textContent = '0.000';
+    if (modeSel.value === 'silent') {
+      timerEl.innerHTML = '<span style="color:#fff;">0.000</span>';
+    } else {
+      timerEl.textContent = '0.000';
+    }
     btn.textContent = '开始';
     btn.disabled = false;
     resultEl.textContent = '';
@@ -100,9 +104,10 @@ function renderStopwatchView() {
       mode = modeSel.value;
       target = Number(targetSel.value);
       if (mode === 'silent') {
-        timerEl.style.visibility = 'hidden';
+        timerEl.innerHTML = '<span style="color:#fff;">0.000</span>';
       } else {
         timerEl.style.visibility = 'visible';
+        timerEl.textContent = '0.000';
       }
       startTime = performance.now();
       rafId = requestAnimationFrame(updateTimer);
@@ -117,7 +122,7 @@ function renderStopwatchView() {
       btn.disabled = true;
       const diff = Math.abs(timer - target);
       let msg = `目标：${target}秒<br>你的成绩：${format(timer)} 秒<br>误差：<b>${format(diff)}</b> 秒`;
-      if (diff === 0) msg += '<br>🌟 宇宙无敌超级强！你是时间的主宰者！';
+      if (Math.abs(diff) < 0.0005) msg += '<br>🌟 宇宙无敌超级强！你是时间的主宰者！';
       else if (diff < 0.05) msg += '<br>🎉 超神！';
       else if (diff < 0.15) msg += '<br>👍 很棒！';
       else if (diff < 0.3) msg += '<br>还不错！';

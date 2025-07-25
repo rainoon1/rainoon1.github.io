@@ -6,10 +6,47 @@ const puzzleConfig = {
   allowedTypes: ['image/jpeg', 'image/png', 'image/webp']
 };
 
+// 动态图库索引
+let imageLibrary = null;
+let imageLibraryLoaded = false;
+
+async function loadImageLibrary() {
+  if (imageLibraryLoaded) return imageLibrary;
+  try {
+    const res = await fetch('/rainoon1.github.io/assets/assets-index.json');
+    const data = await res.json();
+    imageLibrary = Object.entries(data).map(([dir, files]) => ({
+      label: dir ? dir : '默认图库',
+      dir,
+      images: files.map(f => dir ? `/rainoon1.github.io/assets/${dir}/${f}` : `/rainoon1.github.io/assets/${f}`)
+    }));
+    imageLibraryLoaded = true;
+    return imageLibrary;
+  } catch (e) {
+    // 兼容老逻辑
+    imageLibrary = [
+      {
+        label: '默认图库',
+        dir: '',
+        images: [
+          'assets/1 (1).jpg', 'assets/1 (2).jpg', 'assets/1 (3).jpg', 'assets/1 (4).jpg', 'assets/1 (5).jpg',
+          'assets/1 (6).jpg', 'assets/1 (7).jpg', 'assets/1 (8).jpg', 'assets/1 (9).jpg', 'assets/1 (10).jpg',
+          'assets/1 (11).jpg', 'assets/1 (12).jpg', 'assets/1 (13).jpg', 'assets/1 (14).jpg', 'assets/1 (15).jpg',
+          'assets/1 (16).jpg', 'assets/1 (17).jpg', 'assets/1 (18).jpg', 'assets/1 (19).jpg', 'assets/1 (20).jpg',
+          'assets/小兰-1.png'
+        ]
+      }
+    ];
+    imageLibraryLoaded = true;
+    return imageLibrary;
+  }
+}
+
 let state = {
   size: 3,
   type: 'number', // 'number' or 'image'
-  image: puzzleConfig.defaultImages[0],
+  image: '',
+  imgDirIdx: 0,
   customImage: null,
   board: [],
   empty: {x: 0, y: 0},
@@ -70,8 +107,20 @@ function showPuzzleHelp() {
   }
 }
 
-function renderCtrl() {
+async function renderCtrl() {
   const ctrl = document.getElementById('puzzle-ctrl');
+  let imgDirSel = '', imgSel = '';
+  if (state.type === 'image') {
+    const libs = await loadImageLibrary();
+    // 目录选择
+    imgDirSel = `<label>图库：<select id="puzzle-img-dir">${libs.map((lib, i) => `<option value="${i}"${state.imgDirIdx===i?' selected':''}>${lib.label}</option>`).join('')}</select></label>`;
+    // 图片选择
+    const dirIdx = state.imgDirIdx ?? 0;
+    const imgs = libs[dirIdx].images;
+    // 若当前图片不在新图片库，自动选第一个
+    if (!imgs.includes(state.image)) state.image = imgs[0] || '';
+    imgSel = `<label>图片：<select id="puzzle-img-select">${imgs.map((img, i) => `<option value="${img}"${img===state.image?' selected':''}>${img.split('/').pop()}</option>`).join('')}</select></label>`;
+  }
   ctrl.innerHTML = `
     <label>难度：
       <select id="puzzle-size">${puzzleConfig.sizes.map(s => `<option value="${s}"${s===state.size?' selected':''}>${s}×${s}</option>`).join('')}</select>
@@ -83,11 +132,8 @@ function renderCtrl() {
       </select>
     </label>
     <span id="puzzle-img-ctrl" style="display:${state.type==='image'?'inline-block':'none'};">
-      <label>图库：
-        <select id="puzzle-img-select">
-          ${puzzleConfig.defaultImages.map((img,i) => `<option value="${img}"${img===state.image?' selected':''}>图片${i+1}</option>`).join('')}
-        </select>
-      </label>
+      ${imgDirSel}
+      ${imgSel}
       <label>或上传：
         <input type="file" id="puzzle-img-upload" accept="image/jpeg,image/png,image/webp">
       </label>
@@ -95,8 +141,16 @@ function renderCtrl() {
     <button class="button" id="puzzle-reset">重置</button>
   `;
   document.getElementById('puzzle-size').onchange = e => { state.size = +e.target.value; startGame(); };
-  document.getElementById('puzzle-type').onchange = e => { state.type = e.target.value; renderTips(); renderCtrl(); startGame(); };
+  document.getElementById('puzzle-type').onchange = e => { state.type = e.target.value; startGame(); };
   if (state.type === 'image') {
+    document.getElementById('puzzle-img-dir').onchange = e => {
+      state.imgDirIdx = +e.target.value;
+      loadImageLibrary().then(libs => {
+        state.image = libs[state.imgDirIdx].images[0] || '';
+        state.customImage = null;
+        startGame();
+      });
+    };
     document.getElementById('puzzle-img-select').onchange = e => { state.image = e.target.value; state.customImage = null; startGame(); };
     document.getElementById('puzzle-img-upload').onchange = e => handleUpload(e);
   }
@@ -123,7 +177,7 @@ function handleUpload(e) {
   reader.readAsDataURL(file);
 }
 
-function startGame() {
+async function startGame() {
   state.board = createSolvableBoard(state.size);
   state.empty = findEmpty(state.board);
   state.moves = 0;
@@ -137,7 +191,7 @@ function startGame() {
     }
   }
   renderTips();
-  renderCtrl();
+  await renderCtrl();
   renderBoard();
   renderInfo();
 }
@@ -299,4 +353,4 @@ function saveBest() {
   }
 }
 
-window.addEventListener('DOMContentLoaded', startGame); 
+window.addEventListener('DOMContentLoaded', () => { startGame(); }); 

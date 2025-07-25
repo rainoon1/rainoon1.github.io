@@ -77,7 +77,7 @@ window.addEventListener('DOMContentLoaded', () => {
 // 游戏大厅数据
 const games = [
   { key: 'puzzle', name: '拼图游戏', icon: '🧩', best: null },
-  { key: 'stopwatch', name: '掐秒表', icon: '⏱️', best: null },
+  { key: 'stopwatch', name: '3秒挑战', icon: '⏱️', best: null },
   { key: 'mouse', name: '鼠标轨迹', icon: '🖱️', best: null },
   { key: 'reaction', name: '反应测试', icon: '⚡', best: null },
 ];
