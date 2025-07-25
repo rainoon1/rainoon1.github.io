@@ -94,6 +94,7 @@
     padding: 2px 4px;
     margin-bottom: 4px;
     font-size: 0.96em;
+    min-height: 32px;
     height: auto;
   }
 } 
