@@ -59,12 +59,14 @@ function renderTips() {
   }
   if (isMobile) {
     tips.innerHTML = `
-      <div style='display:flex;gap:10px;justify-content:center;align-items:center;height:38px;padding:0;margin:0;'>
+      <div style='font-weight:bold;font-size:1.1em;text-align:center;margin-bottom:2px;'>玩法说明</div>
+      <div style='display:flex;gap:10px;justify-content:center;align-items:center;min-height:38px;'>
         <button id='puzzle-tips-expand' class='button' style='font-size:0.95em;padding:6px 16px;'>展开说明</button>
         <button id='puzzle-help-btn' class='button' style='font-size:0.95em;padding:6px 16px;'>帮助</button>
       </div>
     `;
-    tips.style.height = '38px';
+    tips.style.minHeight = '48px';
+    tips.style.height = 'auto';
     tips.style.padding = '0';
     tips.style.margin = '0 0 10px 0';
     const btnExpand = document.getElementById('puzzle-tips-expand');
@@ -323,12 +325,25 @@ function renderBoard() {
   let gridGap = isPuzzleFullscreen ? 0 : 4;
   let gridStyle = `display:grid;grid-template-columns:repeat(${size},1fr);grid-template-rows:repeat(${size},1fr);gap:${gridGap}px;user-select:none;position:relative;`;
   let fullscreenWrapperStart = '', fullscreenWrapperEnd = '';
+  let isMobile = window.innerWidth <= 700;
   if (isPuzzleFullscreen) {
-    // 计算最大16:9区域
-    const rect = getMax16by9Rect();
-    gridStyle += `width:${rect.width}px;height:${rect.height}px;max-width:100vw;max-height:100vh;aspect-ratio:16/9;`;
-    fullscreenWrapperStart = `<div class='puzzle-fullscreen-bg' style='position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:9999;background:#fff;display:flex;align-items:center;justify-content:center;'>`;
-    fullscreenWrapperEnd = '</div>';
+    if (isMobile) {
+      // 动态计算横屏下的宽高
+      const ww = window.innerWidth;
+      const wh = window.innerHeight;
+      // 横屏后宽高互换
+      const w = wh;
+      const h = ww;
+      gridStyle += `width:${w}px;height:${h}px;max-width:100vw;max-height:100vh;aspect-ratio:16/9;`;
+      fullscreenWrapperStart = `<div id='puzzle-fullscreen-bg' style='position:fixed;left:0;top:0;width:${w}px;height:${h}px;z-index:9999;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;transform:rotate(90deg);transform-origin:left top;'>`;
+      fullscreenWrapperEnd = '</div>';
+    } else {
+      // PC端
+      const rect = getMax16by9Rect();
+      gridStyle += `width:${rect.width}px;height:${rect.height}px;max-width:100vw;max-height:100vh;aspect-ratio:16/9;`;
+      fullscreenWrapperStart = `<div class='puzzle-fullscreen-bg' style='position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:9999;background:#fff;display:flex;align-items:center;justify-content:center;'>`;
+      fullscreenWrapperEnd = '</div>';
+    }
   } else {
     gridStyle += 'width:100%;max-width:640px;aspect-ratio:16/9;margin:0 auto;';
     fullscreenWrapperStart = '';
