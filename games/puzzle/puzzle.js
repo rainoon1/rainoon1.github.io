@@ -136,6 +136,28 @@ function showPuzzleHelp() {
   }
 }
 
+let puzzleAspectRatio = 16 / 9; // 默认比例
+
+// 获取图片原始比例
+function updatePuzzleAspectRatio() {
+  if (state.type === 'image' && state.image) {
+    const img = new window.Image();
+    img.onload = function() {
+      puzzleAspectRatio = img.naturalWidth / img.naturalHeight;
+      renderBoard();
+    };
+    img.onerror = function() {
+      puzzleAspectRatio = 16 / 9;
+      renderBoard();
+    };
+    img.src = state.image;
+  } else {
+    puzzleAspectRatio = 16 / 9;
+    renderBoard();
+  }
+}
+
+// 修改 renderCtrl 里图片选择、上传、目录切换后都调用 updatePuzzleAspectRatio
 async function renderCtrl() {
   const ctrl = document.getElementById('puzzle-ctrl');
   let imgDirSel = '', imgSel = '', imgUploadSel = '';
@@ -177,10 +199,10 @@ async function renderCtrl() {
       loadImageLibrary().then(libs => {
         state.image = libs[state.imgDirIdx].images[0] || '';
         state.customImage = null;
-        startGame();
+        updatePuzzleAspectRatio();
       });
     };
-    document.getElementById('puzzle-img-select').onchange = e => { state.image = e.target.value; state.customImage = null; startGame(); };
+    document.getElementById('puzzle-img-select').onchange = e => { state.image = e.target.value; state.customImage = null; updatePuzzleAspectRatio(); };
     document.getElementById('puzzle-img-upload').onchange = e => handleUpload(e);
   }
   document.getElementById('puzzle-reset').onclick = startGame;
@@ -201,7 +223,7 @@ function handleUpload(e) {
   reader.onload = function(evt) {
     state.customImage = evt.target.result;
     state.image = evt.target.result;
-    startGame();
+    updatePuzzleAspectRatio();
   };
   reader.readAsDataURL(file);
 }
@@ -221,7 +243,12 @@ async function startGame() {
   }
   renderTips();
   await renderCtrl();
-  renderBoard();
+  if (state.type === 'image') {
+    updatePuzzleAspectRatio();
+  } else {
+    puzzleAspectRatio = 16 / 9;
+    renderBoard();
+  }
   renderInfo();
 }
 
@@ -271,6 +298,17 @@ function findEmpty(board) {
 
 let isPuzzleFullscreen = false;
 
+function getMax16by9Rect() {
+  const ww = window.innerWidth;
+  const wh = window.innerHeight;
+  let w = ww, h = Math.round(ww * 9 / 16);
+  if (h > wh) {
+    h = wh;
+    w = Math.round(wh * 16 / 9);
+  }
+  return { width: w, height: h };
+}
+
 function renderBoard() {
   const main = document.getElementById('puzzle-main');
   const size = state.size;
@@ -282,7 +320,21 @@ function renderBoard() {
     fullscreenBtn = `<button id="puzzle-exit-fullscreen-btn" class="button" style="position:absolute;right:8px;top:8px;z-index:10001;font-size:0.95em;padding:6px 16px;">退出全屏</button>`;
   }
   // 16:9 容器
-  main.innerHTML = `<div class="puzzle-grid" style="display:grid;grid-template-columns:repeat(${size},1fr);gap:4px;user-select:none;width:100%;max-width:640px;aspect-ratio:16/9;margin:0 auto;position:relative;">${fullscreenBtn}</div>`;
+  let gridGap = isPuzzleFullscreen ? 0 : 4;
+  let gridStyle = `display:grid;grid-template-columns:repeat(${size},1fr);grid-template-rows:repeat(${size},1fr);gap:${gridGap}px;user-select:none;position:relative;`;
+  let fullscreenWrapperStart = '', fullscreenWrapperEnd = '';
+  if (isPuzzleFullscreen) {
+    // 计算最大16:9区域
+    const rect = getMax16by9Rect();
+    gridStyle += `width:${rect.width}px;height:${rect.height}px;max-width:100vw;max-height:100vh;aspect-ratio:16/9;`;
+    fullscreenWrapperStart = `<div class='puzzle-fullscreen-bg' style='position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:9999;background:#fff;display:flex;align-items:center;justify-content:center;'>`;
+    fullscreenWrapperEnd = '</div>';
+  } else {
+    gridStyle += 'width:100%;max-width:640px;aspect-ratio:16/9;margin:0 auto;';
+    fullscreenWrapperStart = '';
+    fullscreenWrapperEnd = '';
+  }
+  main.innerHTML = `${fullscreenWrapperStart}<div class=\"puzzle-grid\" style=\"${gridStyle}\">${fullscreenBtn}</div>${fullscreenWrapperEnd}`;
   const grid = main.querySelector('.puzzle-grid');
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
@@ -291,8 +343,8 @@ function renderBoard() {
       cell.className = 'puzzle-cell';
       cell.style.background = v === 0 ? 'transparent' : '#fff';
       cell.style.borderRadius = '6px';
-      cell.style.aspectRatio = '16/9';
       cell.style.width = '100%';
+      cell.style.height = '100%';
       cell.style.display = 'flex';
       cell.style.alignItems = 'center';
       cell.style.justifyContent = 'center';

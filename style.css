@@ -147,6 +147,7 @@
   box-sizing: border-box;
   /* 防止底部 UI 透出 */
   min-height: 100vh;
+  min-width: 100vw;
 }
 .puzzle-fullscreen .puzzle-grid {
   max-width: 98vw !important;
@@ -168,7 +169,7 @@
     transform-origin: left top;
     background: #fff !important;
     z-index: 10000 !important;
-    overflow: hidden;
+    overflow: visible !important;
     min-height: 100vw;
     min-width: 100vh;
     display: flex !important;
@@ -179,10 +180,17 @@
     margin: 0 !important;
   }
   .puzzle-fullscreen.puzzle-mobile-landscape .puzzle-grid {
-    max-width: 96vh !important;
-    max-height: 80vw !important;
-    width: 96vh !important;
+    width: 80vw !important;
+    height: 96vh !important;
+    max-width: 80vw !important;
+    max-height: 96vh !important;
     aspect-ratio: 16/9 !important;
     margin: 0 auto !important;
   }
+} 
+body {
+  background: #e8f5e9;
+  margin: 0;
+  padding: 0;
+  background: #fff;
 } 
