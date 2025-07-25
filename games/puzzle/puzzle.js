@@ -199,7 +199,7 @@ async function renderCtrl() {
       loadImageLibrary().then(libs => {
         state.image = libs[state.imgDirIdx].images[0] || '';
         state.customImage = null;
-        updatePuzzleAspectRatio();
+        startGame();
       });
     };
     document.getElementById('puzzle-img-select').onchange = e => { state.image = e.target.value; state.customImage = null; updatePuzzleAspectRatio(); };
