@@ -59,12 +59,14 @@ function renderTips() {
   }
   if (isMobile) {
     tips.innerHTML = `
-      <div style='font-weight:bold;font-size:1.1em;text-align:center;margin:2px 0 2px 0;'>玩法说明</div>
-      <div style='display:flex;gap:10px;justify-content:center;align-items:center;min-height:48px;'>
-        <button id='puzzle-tips-expand' class='button' style='font-size:0.95em;padding:6px 16px;'>展开说明</button>
-        <button id='puzzle-help-btn' class='button' style='font-size:0.95em;padding:6px 16px;'>帮助</button>
+      <div style='display:flex;justify-content:center;align-items:center;min-height:48px;width:100%;'>
+        <button id='puzzle-tips-expand' class='button' style='font-size:1em;padding:8px 24px;margin:0 auto;'>玩法说明</button>
+        <button id='puzzle-help-btn' class='button' style='font-size:1em;padding:8px 24px;margin-left:10px;'>帮助</button>
       </div>
     `;
+    tips.style.display = 'flex';
+    tips.style.justifyContent = 'center';
+    tips.style.alignItems = 'center';
     tips.style.minHeight = '48px';
     tips.style.height = 'auto';
     tips.style.padding = '0';
@@ -146,6 +148,13 @@ let puzzleAspectRatio = 16 / 9; // 默认比例
 
 // 获取图片原始比例
 function updatePuzzleAspectRatio() {
+  // 优化：移动端下始终保持 16:9，不随图片比例变化
+  const isMobile = window.innerWidth <= 700;
+  if (isMobile) {
+    puzzleAspectRatio = 16 / 9;
+    renderBoard();
+    return;
+  }
   if (state.type === 'image' && state.image) {
     const img = new window.Image();
     img.onload = function() {
