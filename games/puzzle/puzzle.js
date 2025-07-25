@@ -59,13 +59,13 @@ function renderTips() {
   }
   if (isMobile) {
     tips.innerHTML = `
-      <div style='font-weight:bold;font-size:1.1em;text-align:center;margin-bottom:2px;'>玩法说明</div>
-      <div style='display:flex;gap:10px;justify-content:center;align-items:center;min-height:38px;'>
+      <div style='font-weight:bold;font-size:1.1em;text-align:center;margin:2px 0 2px 0;'>玩法说明</div>
+      <div style='display:flex;gap:10px;justify-content:center;align-items:center;min-height:16px;'>
         <button id='puzzle-tips-expand' class='button' style='font-size:0.95em;padding:6px 16px;'>展开说明</button>
         <button id='puzzle-help-btn' class='button' style='font-size:0.95em;padding:6px 16px;'>帮助</button>
       </div>
     `;
-    tips.style.minHeight = '48px';
+    tips.style.minHeight = '16px';
     tips.style.height = 'auto';
     tips.style.padding = '0';
     tips.style.margin = '0 0 10px 0';
