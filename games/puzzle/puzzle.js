@@ -190,7 +190,6 @@ async function renderCtrl() {
         ${imgSel}
       </div>
       <div style="${state.type!=='image'?'display:none;':''}">${imgUploadSel}</div>
-      <button class="button" id="puzzle-reset">重置</button>
     </div>
   `;
   document.getElementById('puzzle-size').onchange = e => { state.size = +e.target.value; startGame(); };
@@ -207,7 +206,6 @@ async function renderCtrl() {
     document.getElementById('puzzle-img-select').onchange = e => { state.image = e.target.value; state.customImage = null; updatePuzzleAspectRatio(); };
     document.getElementById('puzzle-img-upload').onchange = e => handleUpload(e);
   }
-  document.getElementById('puzzle-reset').onclick = startGame;
 }
 
 function handleUpload(e) {
@@ -325,31 +323,22 @@ function renderBoard() {
   let gridGap = isPuzzleFullscreen ? 0 : 4;
   let gridStyle = `display:grid;grid-template-columns:repeat(${size},1fr);grid-template-rows:repeat(${size},1fr);gap:${gridGap}px;user-select:none;position:relative;`;
   let fullscreenWrapperStart = '', fullscreenWrapperEnd = '';
-  let isMobile = window.innerWidth <= 700;
   if (isPuzzleFullscreen) {
-    if (isMobile) {
-      // 动态计算横屏下的宽高
-      const ww = window.innerWidth;
-      const wh = window.innerHeight;
-      // 横屏后宽高互换
-      const w = wh;
-      const h = ww;
-      gridStyle += `width:${w}px;height:${h}px;max-width:100vw;max-height:100vh;aspect-ratio:16/9;`;
-      fullscreenWrapperStart = `<div id='puzzle-fullscreen-bg' style='position:fixed;left:0;top:0;width:${w}px;height:${h}px;z-index:9999;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;transform:rotate(90deg);transform-origin:left top;'>`;
-      fullscreenWrapperEnd = '</div>';
-    } else {
-      // PC端
-      const rect = getMax16by9Rect();
-      gridStyle += `width:${rect.width}px;height:${rect.height}px;max-width:100vw;max-height:100vh;aspect-ratio:16/9;`;
-      fullscreenWrapperStart = `<div class='puzzle-fullscreen-bg' style='position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:9999;background:#fff;display:flex;align-items:center;justify-content:center;'>`;
-      fullscreenWrapperEnd = '</div>';
-    }
+    const rect = getMax16by9Rect();
+    gridStyle += `width:${rect.width}px;height:${rect.height}px;max-width:100vw;max-height:100vh;aspect-ratio:16/9;`;
+    fullscreenWrapperStart = `<div class='puzzle-fullscreen-bg' style='position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:9999;background:#e8f5e9;display:flex;align-items:center;justify-content:center;flex-direction:column;'>`;
+    fullscreenWrapperEnd = '</div>';
   } else {
     gridStyle += 'width:100%;max-width:640px;aspect-ratio:16/9;margin:0 auto;';
     fullscreenWrapperStart = '';
     fullscreenWrapperEnd = '';
   }
-  main.innerHTML = `${fullscreenWrapperStart}<div class=\"puzzle-grid\" style=\"${gridStyle}\">${fullscreenBtn}</div>${fullscreenWrapperEnd}`;
+  // 按钮区
+  let btnGroup = `<div style='display:flex;gap:14px;justify-content:center;align-items:center;margin:18px 0 0 0;'>
+    <button class='button' id='puzzle-reset' style='font-size:1.08em;padding:8px 28px;'>重置</button>
+    ${!isPuzzleFullscreen ? `<button id='puzzle-fullscreen-btn' class='button' style='font-size:1.08em;padding:8px 28px;'>全屏</button>` : `<button id='puzzle-exit-fullscreen-btn' class='button' style='font-size:1.08em;padding:8px 28px;'>退出全屏</button>`}
+  </div>`;
+  main.innerHTML = `${fullscreenWrapperStart}<div class=\"puzzle-grid\" style=\"${gridStyle}\"></div>${btnGroup}${fullscreenWrapperEnd}`;
   const grid = main.querySelector('.puzzle-grid');
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
@@ -385,13 +374,12 @@ function renderBoard() {
     }
   }
   // 绑定全屏按钮事件
-  if (!isPuzzleFullscreen) {
-    const btn = document.getElementById('puzzle-fullscreen-btn');
-    if (btn) btn.onclick = enterPuzzleFullscreen;
-  } else {
-    const btn = document.getElementById('puzzle-exit-fullscreen-btn');
-    if (btn) btn.onclick = exitPuzzleFullscreen;
-  }
+  const btnFullscreen = document.getElementById('puzzle-fullscreen-btn');
+  if (btnFullscreen) btnFullscreen.onclick = enterPuzzleFullscreen;
+  const btnExitFullscreen = document.getElementById('puzzle-exit-fullscreen-btn');
+  if (btnExitFullscreen) btnExitFullscreen.onclick = exitPuzzleFullscreen;
+  const btnReset = document.getElementById('puzzle-reset');
+  if (btnReset) btnReset.onclick = startGame;
   // 设置全屏样式
   const puzzleContent = document.getElementById('puzzle-content');
   if (isPuzzleFullscreen) {
