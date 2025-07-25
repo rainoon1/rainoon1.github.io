@@ -84,27 +84,31 @@ function renderTips() {
   }
 }
 
-function showTipsDialog(html) {
-  let dialog = document.getElementById('puzzle-tips-dialog');
+function showDialog(title, contentHtml) {
+  let dialog = document.getElementById('puzzle-unified-dialog');
   if (!dialog) {
     dialog = document.createElement('div');
-    dialog.id = 'puzzle-tips-dialog';
+    dialog.id = 'puzzle-unified-dialog';
     dialog.style.position = 'fixed';
-    dialog.style.left = '50%';
-    dialog.style.top = '50%';
-    dialog.style.transform = 'translate(-50%, -50%)';
-    dialog.style.background = 'rgba(255,255,255,0.98)';
-    dialog.style.boxShadow = '0 8px 32px rgba(76,175,80,0.18)';
-    dialog.style.borderRadius = '18px';
-    dialog.style.padding = '28px 18px 18px 18px';
-    dialog.style.zIndex = '2100';
-    dialog.style.textAlign = 'left';
-    dialog.style.fontSize = '1.08em';
-    dialog.style.color = '#388e3c';
-    dialog.style.maxWidth = '90vw';
-    dialog.innerHTML = `<div style='font-weight:bold;font-size:1.15em;margin-bottom:12px;'>玩法说明</div><div style='margin-bottom:18px;'>${html}</div><button class='button' id='puzzle-tips-close'>关闭</button>`;
+    dialog.style.left = '0';
+    dialog.style.top = '0';
+    dialog.style.width = '100vw';
+    dialog.style.height = '100vh';
+    dialog.style.background = 'rgba(0,0,0,0.55)';
+    dialog.style.zIndex = '30000';
+    dialog.style.display = 'flex';
+    dialog.style.alignItems = 'center';
+    dialog.style.justifyContent = 'center';
+    dialog.innerHTML = `
+      <div style='background:#fff;padding:16px 14px 12px 14px;border-radius:16px;max-width:96vw;max-height:90vh;box-shadow:0 4px 24px rgba(0,0,0,0.18);position:relative;display:flex;flex-direction:column;align-items:center;'>
+        <div style='font-weight:bold;font-size:1.18em;text-align:center;margin-bottom:12px;color:#388e3c;'>${title}</div>
+        <div style='margin-bottom:18px;width:100%;text-align:center;'>${contentHtml}</div>
+        <button id='puzzle-unified-close' class='button' style='margin:0 auto;font-size:1.08em;padding:8px 32px;border-radius:8px;'>关闭</button>
+      </div>
+    `;
     document.body.appendChild(dialog);
-    document.getElementById('puzzle-tips-close').onclick = () => dialog.remove();
+    document.getElementById('puzzle-unified-close').onclick = () => dialog.remove();
+    dialog.onclick = e => { if (e.target === dialog) dialog.remove(); };
   }
 }
 
@@ -327,10 +331,6 @@ function renderBoard() {
   if (isPuzzleFullscreen) {
     const rect = getMax16by9Rect();
     gridStyle += `width:${rect.width}px;height:${rect.height}px;max-width:100vw;max-height:100vh;aspect-ratio:16/9;`;
-    // 仅图片拼图时显示“查看原图”按钮
-    if (state.type === 'image') {
-      showPreviewBtn = `<button id='puzzle-preview-btn' class='button' style='position:absolute;top:16px;right:16px;z-index:10001;font-size:1.08em;padding:8px 18px;'>查看原图</button>`;
-    }
     fullscreenWrapperStart = `<div class='puzzle-fullscreen-bg' style='position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:9999;background:#e8f5e9;display:flex;align-items:center;justify-content:center;flex-direction:column;'>`;
     fullscreenWrapperEnd = '</div>';
   } else {
@@ -345,7 +345,7 @@ function renderBoard() {
     ${state.type === 'image' ? `<button id='puzzle-preview-btn' class='button' style='font-size:1.08em;padding:8px 28px;${isMobile ? 'min-width:40vw;' : ''}'>查看原图</button>` : ''}
     ${!isPuzzleFullscreen ? `<button id='puzzle-fullscreen-btn' class='button' style='font-size:1.08em;padding:8px 28px;${isMobile ? 'min-width:40vw;' : ''}'>全屏</button>` : `<button id='puzzle-exit-fullscreen-btn' class='button' style='font-size:1.08em;padding:8px 28px;${isMobile ? 'min-width:40vw;' : ''}'>退出全屏</button>`}
   </div>`;
-  main.innerHTML = `${fullscreenWrapperStart}<div class=\"puzzle-grid\" style=\"${gridStyle}\">${showPreviewBtn}</div>${btnGroup}${fullscreenWrapperEnd}`;
+  main.innerHTML = `${fullscreenWrapperStart}<div class=\"puzzle-grid\" style=\"${gridStyle}\"></div>${btnGroup}${fullscreenWrapperEnd}`;
   const grid = main.querySelector('.puzzle-grid');
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
@@ -394,15 +394,9 @@ function renderBoard() {
   const puzzleContent = document.getElementById('puzzle-content');
   if (isPuzzleFullscreen) {
     puzzleContent.classList.add('puzzle-fullscreen');
-    if (window.innerWidth <= 700) {
-      puzzleContent.classList.add('puzzle-mobile-landscape');
-    } else {
-      puzzleContent.classList.remove('puzzle-mobile-landscape');
-    }
     document.body.style.overflow = 'hidden';
   } else {
     puzzleContent.classList.remove('puzzle-fullscreen');
-    puzzleContent.classList.remove('puzzle-mobile-landscape');
     document.body.style.overflow = '';
   }
 }
@@ -436,7 +430,7 @@ function showWinDialog() {
     dialog.style.boxShadow = '0 8px 32px rgba(76,175,80,0.18)';
     dialog.style.borderRadius = '18px';
     dialog.style.padding = '48px 32px 32px 32px';
-    dialog.style.zIndex = '1000';
+    dialog.style.zIndex = '40000';
     dialog.style.textAlign = 'center';
     dialog.style.fontSize = '2em';
     dialog.style.color = '#388e3c';
@@ -495,31 +489,9 @@ function saveBest() {
 }
 
 function showPuzzlePreview() {
-  // 弹窗预览原图
-  let dialog = document.getElementById('puzzle-preview-dialog');
-  if (!dialog) {
-    dialog = document.createElement('div');
-    dialog.id = 'puzzle-preview-dialog';
-    dialog.style.position = 'fixed';
-    dialog.style.left = '0';
-    dialog.style.top = '0';
-    dialog.style.width = '100vw';
-    dialog.style.height = '100vh';
-    dialog.style.background = 'rgba(0,0,0,0.55)';
-    dialog.style.zIndex = '20000';
-    dialog.style.display = 'flex';
-    dialog.style.alignItems = 'center';
-    dialog.style.justifyContent = 'center';
-    dialog.innerHTML = `
-      <div style='background:#fff;padding:12px 12px 8px 12px;border-radius:12px;max-width:96vw;max-height:90vh;box-shadow:0 4px 24px rgba(0,0,0,0.18);position:relative;'>
-        <img src='${state.customImage || state.image}' style='max-width:90vw;max-height:70vh;display:block;border-radius:8px;'>
-        <button id='puzzle-preview-close' class='button' style='margin:10px auto 0 auto;display:block;font-size:1.08em;padding:6px 24px;'>关闭</button>
-      </div>
-    `;
-    document.body.appendChild(dialog);
-    document.getElementById('puzzle-preview-close').onclick = () => dialog.remove();
-    dialog.onclick = e => { if (e.target === dialog) dialog.remove(); };
-  }
+  // 统一弹窗UI
+  const imgUrl = state.customImage || state.image;
+  showDialog('原图预览', `<img src='${imgUrl}' style='max-width:90vw;max-height:60vh;display:block;border-radius:10px;'>`);
 }
 
 window.addEventListener('DOMContentLoaded', () => { startGame(); }); 
