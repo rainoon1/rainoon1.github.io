@@ -384,15 +384,9 @@ function renderBoard() {
   const puzzleContent = document.getElementById('puzzle-content');
   if (isPuzzleFullscreen) {
     puzzleContent.classList.add('puzzle-fullscreen');
-    if (window.innerWidth <= 700) {
-      puzzleContent.classList.add('puzzle-mobile-landscape');
-    } else {
-      puzzleContent.classList.remove('puzzle-mobile-landscape');
-    }
     document.body.style.overflow = 'hidden';
   } else {
     puzzleContent.classList.remove('puzzle-fullscreen');
-    puzzleContent.classList.remove('puzzle-mobile-landscape');
     document.body.style.overflow = '';
   }
 }
