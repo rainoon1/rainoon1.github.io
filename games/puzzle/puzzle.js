@@ -46,7 +46,6 @@ let state = {
 function renderTips() {
   const tips = document.getElementById('puzzle-tips');
   if (!tips) return;
-  // 判断是否移动端
   const isMobile = window.innerWidth <= 700;
   let desc = '';
   if (state.type === 'number') {
@@ -59,13 +58,19 @@ function renderTips() {
       可选择内置图片或上传自定义图片。支持多种难度。步数越少越好！`;
   }
   if (isMobile) {
-    tips.innerHTML = `<div style='font-weight:bold;font-size:1.1em;margin-bottom:8px;'>玩法简介</div><button id='puzzle-tips-expand' class='button' style='font-size:0.95em;padding:6px 16px;'>展开说明</button>`;
-    const btn = document.getElementById('puzzle-tips-expand');
-    if (btn) {
-      btn.onclick = function() {
-        showTipsDialog(desc);
-      };
-    }
+    tips.innerHTML = `
+      <div style='display:flex;gap:10px;justify-content:center;align-items:center;height:38px;padding:0;margin:0;'>
+        <button id='puzzle-tips-expand' class='button' style='font-size:0.95em;padding:6px 16px;'>展开说明</button>
+        <button id='puzzle-help-btn' class='button' style='font-size:0.95em;padding:6px 16px;'>帮助</button>
+      </div>
+    `;
+    tips.style.height = '38px';
+    tips.style.padding = '0';
+    tips.style.margin = '0 0 10px 0';
+    const btnExpand = document.getElementById('puzzle-tips-expand');
+    if (btnExpand) btnExpand.onclick = function() { showTipsDialog(desc); };
+    const helpBtn = document.getElementById('puzzle-help-btn');
+    if (helpBtn) helpBtn.onclick = function() { showPuzzleHelp(); };
   } else {
     tips.innerHTML = desc + `<div style='margin-top:18px;text-align:right;'><button id='puzzle-help-btn' class='button' style='font-size:0.95em;padding:6px 16px;'>帮助</button></div>`;
     const helpBtn = document.getElementById('puzzle-help-btn');
@@ -324,9 +329,15 @@ function renderBoard() {
   const puzzleContent = document.getElementById('puzzle-content');
   if (isPuzzleFullscreen) {
     puzzleContent.classList.add('puzzle-fullscreen');
+    if (window.innerWidth <= 700) {
+      puzzleContent.classList.add('puzzle-mobile-landscape');
+    } else {
+      puzzleContent.classList.remove('puzzle-mobile-landscape');
+    }
     document.body.style.overflow = 'hidden';
   } else {
     puzzleContent.classList.remove('puzzle-fullscreen');
+    puzzleContent.classList.remove('puzzle-mobile-landscape');
     document.body.style.overflow = '';
   }
 }
