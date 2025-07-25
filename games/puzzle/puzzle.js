@@ -13,30 +13,18 @@ let imageLibraryLoaded = false;
 async function loadImageLibrary() {
   if (imageLibraryLoaded) return imageLibrary;
   try {
-    const res = await fetch('/rainoon1.github.io/assets/assets-index.json');
+    const res = await fetch('../../assets/assets-index.json');
     const data = await res.json();
     imageLibrary = Object.entries(data).map(([dir, files]) => ({
       label: dir ? dir : '默认图库',
       dir,
-      images: files.map(f => dir ? `/rainoon1.github.io/assets/${dir}/${f}` : `/rainoon1.github.io/assets/${f}`)
+      images: files.map(f => dir ? `../../assets/${dir}/${f}` : `../../assets/${f}`)
     }));
     imageLibraryLoaded = true;
     return imageLibrary;
   } catch (e) {
-    // 兼容老逻辑
-    imageLibrary = [
-      {
-        label: '默认图库',
-        dir: '',
-        images: [
-          'assets/1 (1).jpg', 'assets/1 (2).jpg', 'assets/1 (3).jpg', 'assets/1 (4).jpg', 'assets/1 (5).jpg',
-          'assets/1 (6).jpg', 'assets/1 (7).jpg', 'assets/1 (8).jpg', 'assets/1 (9).jpg', 'assets/1 (10).jpg',
-          'assets/1 (11).jpg', 'assets/1 (12).jpg', 'assets/1 (13).jpg', 'assets/1 (14).jpg', 'assets/1 (15).jpg',
-          'assets/1 (16).jpg', 'assets/1 (17).jpg', 'assets/1 (18).jpg', 'assets/1 (19).jpg', 'assets/1 (20).jpg',
-          'assets/小兰-1.png'
-        ]
-      }
-    ];
+    // 加载失败时返回空图库
+    imageLibrary = [];
     imageLibraryLoaded = true;
     return imageLibrary;
   }
