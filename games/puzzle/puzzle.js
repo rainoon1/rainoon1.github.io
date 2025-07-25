@@ -72,7 +72,7 @@ function renderTips() {
     tips.style.padding = '0';
     tips.style.margin = '0 0 10px 0';
     const btnExpand = document.getElementById('puzzle-tips-expand');
-    if (btnExpand) btnExpand.onclick = function() { showTipsDialog(desc); };
+    if (btnExpand) btnExpand.onclick = function() { showDialog('玩法说明', desc); };
     const helpBtn = document.getElementById('puzzle-help-btn');
     if (helpBtn) helpBtn.onclick = function() { showPuzzleHelp(); };
   } else {
