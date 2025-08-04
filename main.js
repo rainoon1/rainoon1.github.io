@@ -30,16 +30,24 @@ function updateCountdown() {
   const now = new Date();
   const offWork = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute, 0);
   let text = '';
+  let label = '';
+  
   if (now < offWork) {
+    // 还没到下班时间，显示倒计时
     let diff = Math.max(0, offWork - now);
     let hours = Math.floor(diff / 3600000);
     let minutes = Math.floor((diff % 3600000) / 60000);
     let seconds = Math.floor((diff % 60000) / 1000);
     text = `${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+    label = '距离下班还有';
   } else {
-    text = '00:00:00';
+    // 已经过了下班时间，显示下班快乐
+    text = '下班快乐！';
+    label = '';
   }
+  
   document.querySelector('.countdown').textContent = text;
+  document.querySelector('.countdown-label').textContent = label;
 }
 
 function renderOffWorkTimeInput() {

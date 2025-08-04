@@ -15,12 +15,15 @@ const BALL_COLORS = [
   'rgba(135,206,250,0.7)',   // 天蓝色
   'rgba(244,67,54,0.7)'      // 红色（小）
 ];
-const GRAVITY_DIST = 180;
-const GRAVITY_STRENGTH = 0.22;
+const GRAVITY_DIST = 200;
+const GRAVITY_STRENGTH = 0.25;
 const MAX_SPEED = 3.2;
+const GRAVITY_POINT_DURATION = 30000; // 引力点持续时间30秒
+const GRAVITY_POINT_INTERVAL = 30000; // 每30秒生成一个新的引力点
 
 let balls = [];
-let mouse = { x: width/2, y: height/2, lastX: width/2, lastY: width/2, lastMove: Date.now(), fast: false };
+let gravityPoint = null;
+let lastGravityPointTime = 0;
 
 function randomBall() {
   // 随机分配一个档位
@@ -45,30 +48,40 @@ function resetBalls() {
 }
 resetBalls();
 
+function createGravityPoint() {
+  const margin = 100; // 距离边缘的最小距离
+  return {
+    x: margin + Math.random() * (width - 2 * margin),
+    y: margin + Math.random() * (height - 2 * margin),
+    createdAt: Date.now(),
+    strength: 0.8 + Math.random() * 0.4 // 随机强度
+  };
+}
+
+function updateGravityPoint() {
+  const now = Date.now();
+  
+  // 检查是否需要创建新的引力点
+  if (!gravityPoint && now - lastGravityPointTime > GRAVITY_POINT_INTERVAL) {
+    gravityPoint = createGravityPoint();
+    lastGravityPointTime = now;
+  }
+  
+  // 检查当前引力点是否过期
+  if (gravityPoint && now - gravityPoint.createdAt > GRAVITY_POINT_DURATION) {
+    gravityPoint = null;
+  }
+}
+
 window.addEventListener('resize', () => {
   width = window.innerWidth;
   height = window.innerHeight;
   canvas.width = width;
   canvas.height = height;
   resetBalls();
-});
-
-canvas.addEventListener('mousemove', e => {
-  const now = Date.now();
-  const dx = e.clientX - mouse.lastX;
-  const dy = e.clientY - mouse.lastY;
-  const dist = Math.sqrt(dx*dx + dy*dy);
-  mouse.fast = dist > 60;
-  mouse.x = e.clientX;
-  mouse.y = e.clientY;
-  mouse.lastX = e.clientX;
-  mouse.lastY = e.clientY;
-  mouse.lastMove = now;
-});
-canvas.addEventListener('mouseleave', () => {
-  mouse.x = width/2;
-  mouse.y = height/2;
-  mouse.fast = false;
+  // 重置引力点
+  gravityPoint = null;
+  lastGravityPointTime = 0;
 });
 
 function updateBalls() {
@@ -78,17 +91,19 @@ function updateBalls() {
     if (b.x + b.r > width && b.vx > 0) b.vx *= -1;
     if (b.y - b.r < 0 && b.vy < 0) b.vy *= -1;
     if (b.y + b.r > height && b.vy > 0) b.vy *= -1;
-    // 引力效果
-    if (!mouse.fast) {
-      const dx = mouse.x - b.x;
-      const dy = mouse.y - b.y;
+    
+    // 引力点效果
+    if (gravityPoint) {
+      const dx = gravityPoint.x - b.x;
+      const dy = gravityPoint.y - b.y;
       const dist = Math.sqrt(dx*dx + dy*dy);
       if (dist < GRAVITY_DIST) {
-        const force = (1 - dist / GRAVITY_DIST) * GRAVITY_STRENGTH;
+        const force = (1 - dist / GRAVITY_DIST) * GRAVITY_STRENGTH * gravityPoint.strength;
         b.vx += force * dx / dist;
         b.vy += force * dy / dist;
       }
     }
+    
     // 限速
     const speed = Math.sqrt(b.vx*b.vx + b.vy*b.vy);
     if (speed > MAX_SPEED) {
@@ -102,6 +117,39 @@ function updateBalls() {
 
 function drawBalls() {
   ctx.clearRect(0, 0, width, height);
+  
+  // 绘制引力点（如果存在）
+  if (gravityPoint) {
+    const age = Date.now() - gravityPoint.createdAt;
+    const progress = age / GRAVITY_POINT_DURATION;
+    const alpha = 0.3 * (1 - progress * 0.5); // 随时间逐渐变淡
+    
+    // 绘制引力点光环
+    ctx.beginPath();
+    ctx.arc(gravityPoint.x, gravityPoint.y, GRAVITY_DIST, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.1})`;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // 绘制引力点中心
+    ctx.beginPath();
+    ctx.arc(gravityPoint.x, gravityPoint.y, 8, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+    ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+    ctx.shadowBlur = 20;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    
+    // 绘制脉冲效果
+    const pulseSize = 15 + Math.sin(age * 0.01) * 5;
+    ctx.beginPath();
+    ctx.arc(gravityPoint.x, gravityPoint.y, pulseSize, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.3})`;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  
+  // 绘制小球
   for (let b of balls) {
     ctx.beginPath();
     ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
@@ -114,6 +162,7 @@ function drawBalls() {
 }
 
 function animate() {
+  updateGravityPoint();
   updateBalls();
   drawBalls();
   requestAnimationFrame(animate);
