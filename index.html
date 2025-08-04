@@ -3,18 +3,156 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>摸鱼游戏小站</title>
+  <title>摸鱼游戏小站 - 让工作更有趣</title>
+  <meta name="description" content="为上班族设计的轻量级休闲小游戏网站，帮助你在工作间隙放松心情">
   <link rel="stylesheet" href="style.css">
-  <style>
-    body { background: #e8f5e9; }
-  </style>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
 </head>
 <body>
+  <!-- 背景动画 -->
   <canvas id="gravity-bg" style="position:fixed;z-index:-1;top:0;left:0;width:100vw;height:100vh;"></canvas>
-  <h1 style="text-align:center;margin-top:32px;">摸鱼游戏小站</h1>
-  <div class="countdown"></div>
-  <div class="game-hall"></div>
+  
+  <!-- 导航栏 -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="nav-brand">
+        <span class="nav-icon">🎮</span>
+        <span class="nav-title">摸鱼游戏小站</span>
+      </div>
+      <div class="nav-menu">
+        <a href="#" class="nav-link active" data-section="home">首页</a>
+        <a href="#" class="nav-link" data-section="games">游戏</a>
+        <a href="#" class="nav-link" data-section="about">关于</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 主要内容区域 -->
+  <main class="main-content">
+    <!-- 首页部分 -->
+    <section id="home-section" class="content-section active">
+      <div class="hero-section">
+        <h1 class="hero-title">让工作更有趣</h1>
+        <p class="hero-subtitle">在忙碌的工作中，给自己一点放松的时间</p>
+        <div class="countdown-container">
+          <div class="countdown"></div>
+          <div class="countdown-label">距离下班还有</div>
+        </div>
+        <div class="hero-actions">
+          <button class="hero-button primary" onclick="showSection('games')">
+            <span class="button-icon">🎮</span>
+            <span class="button-text">开始游戏</span>
+          </button>
+          <button class="hero-button secondary" onclick="showSection('about')">
+            <span class="button-icon">ℹ️</span>
+            <span class="button-text">了解更多</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 下班时间设置 -->
+      <div class="settings-panel">
+        <div class="offwork-setup"></div>
+      </div>
+
+      <!-- 游戏成绩统计 -->
+      <div class="stats-grid">
+        <div class="stat-card" id="stat-puzzle">
+          <div class="stat-icon">🧩</div>
+          <div class="stat-number">--</div>
+          <div class="stat-label">拼图游戏</div>
+        </div>
+        <div class="stat-card" id="stat-stopwatch">
+          <div class="stat-icon">⏱️</div>
+          <div class="stat-number">--</div>
+          <div class="stat-label">3秒挑战</div>
+        </div>
+        <div class="stat-card" id="stat-mouse">
+          <div class="stat-icon">🖱️</div>
+          <div class="stat-number">--</div>
+          <div class="stat-label">鼠标轨迹</div>
+        </div>
+        <div class="stat-card" id="stat-reaction">
+          <div class="stat-icon">⚡</div>
+          <div class="stat-number">--</div>
+          <div class="stat-label">反应测试</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 游戏部分 -->
+    <section id="games-section" class="content-section">
+      <div class="section-header">
+        <h2>游戏大厅</h2>
+        <p>选择你喜欢的游戏，放松一下心情</p>
+      </div>
+      <div class="game-hall"></div>
+    </section>
+
+    <!-- 关于部分 -->
+    <section id="about-section" class="content-section">
+      <div class="section-header">
+        <h2>关于本站</h2>
+        <p>为上班族打造的休闲小游戏集合</p>
+      </div>
+      <div class="about-content">
+        <div class="about-card">
+          <h3>🎯 我们的目标</h3>
+          <p>帮助忙碌的上班族在工作间隙找到放松的方式，通过简单有趣的小游戏缓解工作压力。</p>
+        </div>
+        <div class="about-card">
+          <h3>🎮 游戏特色</h3>
+          <ul>
+            <li>轻量级设计，加载快速</li>
+            <li>无需注册，即开即玩</li>
+            <li>支持移动端，随时随地</li>
+            <li>记录最佳成绩，挑战自我</li>
+          </ul>
+        </div>
+        <div class="about-card">
+          <h3>💡 使用建议</h3>
+          <ul>
+            <li>建议在工作休息时间使用</li>
+            <li>每次游戏时间控制在5-10分钟</li>
+            <li>注意保护眼睛，适当休息</li>
+            <li>合理安排时间，不要影响工作</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 拼图游戏视图 -->
   <div id="puzzle-view" style="display:none"></div>
+
+  <!-- 页脚 -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>摸鱼游戏小站</h4>
+        <p>让工作更有趣，让生活更轻松</p>
+      </div>
+      <div class="footer-section">
+        <h4>快速链接</h4>
+        <a href="#" class="footer-link" data-section="home">首页</a>
+        <a href="#" class="footer-link" data-section="games">游戏</a>
+        <a href="#" class="footer-link" data-section="about">关于</a>
+      </div>
+      <div class="footer-section">
+        <h4>联系方式</h4>
+        <p>如有问题或建议，欢迎反馈</p>
+        <div class="social-links">
+          <a href="#" class="social-link">📧</a>
+          <a href="#" class="social-link">🐦</a>
+          <a href="#" class="social-link">💬</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2024 摸鱼游戏小站. 让工作更有趣.</p>
+    </div>
+  </footer>
+
   <script src="gravity-balls.js"></script>
   <script src="main.js"></script>
   <script src="puzzle.js"></script>
