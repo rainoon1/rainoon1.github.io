@@ -23,6 +23,9 @@
         <a href="#" class="nav-link active" data-section="home">首页</a>
         <a href="#" class="nav-link" data-section="games">游戏</a>
         <a href="#" class="nav-link" data-section="about">关于</a>
+        <button id="theme-toggle" class="theme-toggle" title="切换主题">
+          <span class="theme-icon">🌙</span>
+        </button>
       </div>
     </div>
   </nav>
@@ -57,25 +60,82 @@
 
       <!-- 游戏成绩统计 -->
       <div class="stats-grid">
-        <div class="stat-card" id="stat-puzzle">
+        <div class="stat-card" id="stat-number_puzzle">
           <div class="stat-icon">🧩</div>
           <div class="stat-number">--</div>
-          <div class="stat-label">拼图游戏</div>
+          <div class="stat-label">数字拼图</div>
+          <div class="stat-mode">3×3数字拼图</div>
+          <div class="stat-progress">
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+        <div class="stat-card" id="stat-image_puzzle">
+          <div class="stat-icon">🖼️</div>
+          <div class="stat-number">--</div>
+          <div class="stat-label">图片拼图</div>
+          <div class="stat-mode">4×4图片拼图</div>
+          <div class="stat-progress">
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: 0%"></div>
+            </div>
+          </div>
         </div>
         <div class="stat-card" id="stat-stopwatch">
           <div class="stat-icon">⏱️</div>
           <div class="stat-number">--</div>
           <div class="stat-label">3秒挑战</div>
+          <div class="stat-mode">3秒动态秒表</div>
+          <div class="stat-progress">
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: 0%"></div>
+            </div>
+          </div>
         </div>
         <div class="stat-card" id="stat-mouse">
           <div class="stat-icon">🖱️</div>
           <div class="stat-number">--</div>
           <div class="stat-label">鼠标轨迹</div>
+          <div class="stat-mode">默认模式</div>
+          <div class="stat-progress">
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: 0%"></div>
+            </div>
+          </div>
         </div>
         <div class="stat-card" id="stat-reaction">
           <div class="stat-icon">⚡</div>
           <div class="stat-number">--</div>
           <div class="stat-label">反应测试</div>
+          <div class="stat-mode">挑战1次</div>
+          <div class="stat-progress">
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 今日游戏统计 -->
+      <div class="daily-stats">
+        <h3>今日游戏统计</h3>
+        <div class="daily-stats-grid">
+          <div class="daily-stat-item">
+            <div class="daily-stat-icon">🎮</div>
+            <div class="daily-stat-number" id="today-games">0</div>
+            <div class="daily-stat-label">游戏次数</div>
+          </div>
+          <div class="daily-stat-item">
+            <div class="daily-stat-icon">⏰</div>
+            <div class="daily-stat-number" id="today-time">0</div>
+            <div class="daily-stat-label">游戏时长(分钟)</div>
+          </div>
+          <div class="daily-stat-item">
+            <div class="daily-stat-icon">🏆</div>
+            <div class="daily-stat-number" id="today-best">--</div>
+            <div class="daily-stat-label">最佳成绩</div>
+          </div>
         </div>
       </div>
     </section>
@@ -86,7 +146,58 @@
         <h2>游戏大厅</h2>
         <p>选择你喜欢的游戏，放松一下心情</p>
       </div>
+      
+      <!-- 游戏筛选器 -->
+      <div class="game-filters">
+        <div class="filter-group">
+          <label class="filter-label">难度等级：</label>
+          <select id="difficulty-filter" class="filter-select">
+            <option value="all">全部难度</option>
+            <option value="easy">简单 (3秒挑战、反应测试)</option>
+            <option value="medium">中等 (鼠标轨迹、数字拼图)</option>
+            <option value="hard">困难 (图片拼图)</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">游戏类型：</label>
+          <select id="category-filter" class="filter-select">
+            <option value="all">全部类型</option>
+            <option value="puzzle">益智类</option>
+            <option value="reaction">反应类</option>
+            <option value="skill">技巧类</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <button id="sort-by-score" class="filter-button">
+            <span class="button-icon">🏆</span>
+            按成绩排序
+          </button>
+        </div>
+      </div>
+      
       <div class="game-hall"></div>
+      
+      <!-- 游戏推荐 -->
+      <div class="game-recommendations">
+        <h3>今日推荐</h3>
+        <div class="recommendation-cards">
+          <div class="recommendation-card">
+            <div class="rec-icon">🔥</div>
+            <div class="rec-title">热门游戏</div>
+            <div class="rec-desc">根据你的游戏历史推荐</div>
+          </div>
+          <div class="recommendation-card">
+            <div class="rec-icon">⚡</div>
+            <div class="rec-title">快速游戏</div>
+            <div class="rec-desc">简单难度，1-2分钟即可完成</div>
+          </div>
+          <div class="recommendation-card">
+            <div class="rec-icon">🎯</div>
+            <div class="rec-title">挑战模式</div>
+            <div class="rec-desc">困难难度，考验你的技能极限</div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- 关于部分 -->

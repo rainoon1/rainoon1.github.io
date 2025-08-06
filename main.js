@@ -101,10 +101,10 @@ function renderOffWorkTimeInput() {
 
 // 统计功能 - 显示四个游戏默认模式下的成绩
 function updateStats() {
-  const games = ['puzzle', 'stopwatch', 'mouse', 'reaction'];
-  const gameNames = ['拼图游戏', '3秒挑战', '鼠标轨迹', '反应测试'];
-  const gameIcons = ['🧩', '⏱️', '🖱️', '⚡'];
-  const gameModes = ['3×3数字拼图', '3秒动态秒表', '默认模式', '挑战1次'];
+  const games = ['number_puzzle', 'image_puzzle', 'stopwatch', 'mouse', 'reaction'];
+  const gameNames = ['数字拼图', '图片拼图', '3秒挑战', '鼠标轨迹', '反应测试'];
+  const gameIcons = ['🧩', '🖼️', '⏱️', '🖱️', '⚡'];
+  const gameModes = ['3×3数字拼图', '4×4图片拼图', '3秒动态秒表', '默认模式', '挑战1次'];
   
   games.forEach((game, index) => {
     let score = localStorage.getItem(`record_${game}`) || '--';
@@ -112,8 +112,12 @@ function updateStats() {
     // 格式化成绩显示
     if (score !== '--') {
       switch (game) {
-        case 'puzzle':
-          // 拼图游戏显示完成时间
+        case 'number_puzzle':
+          // 数字拼图显示完成时间
+          score = `${score}秒`;
+          break;
+        case 'image_puzzle':
+          // 图片拼图显示完成时间
           score = `${score}秒`;
           break;
         case 'stopwatch':
@@ -138,9 +142,17 @@ function updateStats() {
         <div class="stat-number">${score}</div>
         <div class="stat-label">${gameNames[index]}</div>
         <div class="stat-mode">${gameModes[index]}</div>
+        <div class="stat-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 0%"></div>
+          </div>
+        </div>
       `;
     }
   });
+  
+  // 更新进度条
+  updateStatProgress();
 }
 
 function recordGamePlay(gameKey, duration = 0) {
@@ -228,10 +240,61 @@ function updateActiveNavLink(sectionName) {
 
 // 游戏大厅数据
 const games = [
-  { key: 'puzzle', name: '拼图游戏', icon: '🧩', best: null, description: '挑战你的空间思维能力' },
-  { key: 'stopwatch', name: '3秒挑战', icon: '⏱️', best: null, description: '测试你的时间感知能力' },
-  { key: 'mouse', name: '鼠标轨迹', icon: '🖱️', best: null, description: '锻炼你的鼠标控制技巧' },
-  { key: 'reaction', name: '反应测试', icon: '⚡', best: null, description: '测试你的反应速度' },
+  { 
+    key: 'number_puzzle', 
+    name: '数字拼图', 
+    icon: '🧩', 
+    best: null, 
+    description: '将数字按顺序排列，挑战空间思维',
+    difficulty: 'medium',
+    category: 'puzzle',
+    estimatedTime: '2-4分钟',
+    tags: ['益智', '空间思维']
+  },
+  { 
+    key: 'image_puzzle', 
+    name: '图片拼图', 
+    icon: '🖼️', 
+    best: null, 
+    description: '将图片碎片拼回原图，考验视觉记忆',
+    difficulty: 'hard',
+    category: 'puzzle',
+    estimatedTime: '3-5分钟',
+    tags: ['益智', '视觉记忆']
+  },
+  { 
+    key: 'stopwatch', 
+    name: '3秒挑战', 
+    icon: '⏱️', 
+    best: null, 
+    description: '测试你的时间感知能力',
+    difficulty: 'easy',
+    category: 'reaction',
+    estimatedTime: '1-2分钟',
+    tags: ['反应', '时间感知']
+  },
+  { 
+    key: 'mouse', 
+    name: '鼠标轨迹', 
+    icon: '🖱️', 
+    best: null, 
+    description: '锻炼你的鼠标控制技巧',
+    difficulty: 'medium',
+    category: 'skill',
+    estimatedTime: '2-3分钟',
+    tags: ['技巧', '鼠标控制']
+  },
+  { 
+    key: 'reaction', 
+    name: '反应测试', 
+    icon: '⚡', 
+    best: null, 
+    description: '测试你的反应速度',
+    difficulty: 'easy',
+    category: 'reaction',
+    estimatedTime: '1-2分钟',
+    tags: ['反应', '速度测试']
+  },
 ];
 
 function loadBestScores() {
@@ -243,11 +306,23 @@ function loadBestScores() {
 function renderGameHall() {
   loadBestScores();
   const hall = document.querySelector('.game-hall');
-  const gameModes = ['3×3数字拼图', '3秒动态秒表', '默认模式', '挑战1次'];
+  const gameModes = ['3×3数字拼图', '4×4图片拼图', '3秒动态秒表', '默认模式', '挑战1次'];
   
-  hall.innerHTML = games.map((g, index) => {
+  // 获取筛选条件
+  const difficultyFilter = document.getElementById('difficulty-filter')?.value || 'all';
+  const categoryFilter = document.getElementById('category-filter')?.value || 'all';
+  
+  // 筛选游戏
+  let filteredGames = games.filter(game => {
+    if (difficultyFilter !== 'all' && game.difficulty !== difficultyFilter) return false;
+    if (categoryFilter !== 'all' && game.category !== categoryFilter) return false;
+    return true;
+  });
+  
+  hall.innerHTML = filteredGames.map((g, index) => {
     let href = '';
-    if (g.key === 'puzzle') href = 'games/puzzle/puzzle.html';
+    if (g.key === 'number_puzzle') href = 'games/number-puzzle/number-puzzle.html';
+    else if (g.key === 'image_puzzle') href = 'games/image-puzzle/image-puzzle.html';
     else if (g.key === 'stopwatch') href = 'games/stopwatch/stopwatch.html';
     else if (g.key === 'mouse') href = 'games/mouse/mouse.html';
     else if (g.key === 'reaction') href = 'games/reaction/reaction.html';
@@ -256,7 +331,10 @@ function renderGameHall() {
     let formattedScore = g.best;
     if (g.best !== '--') {
       switch (g.key) {
-        case 'puzzle':
+        case 'number_puzzle':
+          formattedScore = `${g.best}秒`;
+          break;
+        case 'image_puzzle':
           formattedScore = `${g.best}秒`;
           break;
         case 'stopwatch':
@@ -271,16 +349,118 @@ function renderGameHall() {
       }
     }
     
+    // 难度标签
+    const difficultyLabels = {
+      'easy': '简单',
+      'medium': '中等', 
+      'hard': '困难'
+    };
+    
+    const difficultyColors = {
+      'easy': 'rgba(76, 175, 80, 0.3)',    // 绿色
+      'medium': 'rgba(255, 152, 0, 0.3)',  // 橙色
+      'hard': 'rgba(244, 67, 54, 0.3)'     // 红色
+    };
+    
     return `
       <div class="game-card" onclick="window.open('${href}', '_blank')">
         <div style="font-size:3em;margin-bottom:15px;">${g.icon}</div>
         <div style="font-size:1.3em;font-weight:bold;margin-bottom:10px;">${g.name}</div>
         <div style="font-size:0.9em;opacity:0.8;margin-bottom:10px;">${g.description}</div>
+        <div style="display:flex;justify-content:center;gap:8px;margin-bottom:10px;">
+          <span style="background:${difficultyColors[g.difficulty]};padding:2px 8px;border-radius:10px;font-size:0.8em;border:1px solid rgba(255,255,255,0.2);">${difficultyLabels[g.difficulty]}</span>
+          <span style="background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:10px;font-size:0.8em;">${g.estimatedTime}</span>
+        </div>
         <div style="font-size:0.8em;opacity:0.6;margin-bottom:8px;font-style:italic;">${gameModes[index]}</div>
         <div style="font-size:0.9em;opacity:0.7;">最佳成绩: ${formattedScore}</div>
       </div>
     `;
   }).join('');
+  
+  // 如果没有游戏匹配筛选条件
+  if (filteredGames.length === 0) {
+    hall.innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;color:white;padding:40px;">
+        <div style="font-size:3em;margin-bottom:20px;">🔍</div>
+        <h3>没有找到匹配的游戏</h3>
+        <p style="opacity:0.8;margin-top:10px;">请尝试调整筛选条件</p>
+      </div>
+    `;
+  }
+}
+
+// 更新今日统计
+function updateDailyStats() {
+  const today = new Date().toDateString();
+  const stats = JSON.parse(localStorage.getItem('gameStats') || '{}');
+  const todayStats = stats[today] || { gamesPlayed: 0, totalTime: 0 };
+  
+  document.getElementById('today-games').textContent = todayStats.gamesPlayed;
+  document.getElementById('today-time').textContent = Math.round(todayStats.totalTime / 60);
+  
+  // 计算今日最佳成绩
+  const games = ['number_puzzle', 'image_puzzle', 'stopwatch', 'mouse', 'reaction'];
+  let bestScore = '--';
+  let bestGame = '';
+  
+  games.forEach(game => {
+    const score = localStorage.getItem(`record_${game}`);
+    if (score && score !== '--') {
+      if (bestScore === '--' || parseFloat(score) < parseFloat(bestScore)) {
+        bestScore = score;
+        bestGame = game;
+      }
+    }
+  });
+  
+  if (bestScore !== '--') {
+    const gameNames = { 
+      number_puzzle: '数字拼图', 
+      image_puzzle: '图片拼图',
+      stopwatch: '3秒挑战', 
+      mouse: '鼠标轨迹', 
+      reaction: '反应测试' 
+    };
+    document.getElementById('today-best').textContent = `${gameNames[bestGame]} ${bestScore}`;
+  }
+}
+
+// 更新统计卡片进度条
+function updateStatProgress() {
+  const games = ['number_puzzle', 'image_puzzle', 'stopwatch', 'mouse', 'reaction'];
+  
+  games.forEach(game => {
+    const score = localStorage.getItem(`record_${game}`);
+    const progressBar = document.querySelector(`#stat-${game} .progress-fill`);
+    
+    if (progressBar && score !== '--') {
+      // 根据游戏类型设置不同的进度计算方式
+      let progress = 0;
+      switch (game) {
+        case 'number_puzzle':
+          // 数字拼图（中等难度）：时间越短越好，假设45秒为满分
+          progress = Math.max(0, Math.min(100, (45 - parseFloat(score)) / 45 * 100));
+          break;
+        case 'image_puzzle':
+          // 图片拼图（困难难度）：时间越短越好，假设90秒为满分
+          progress = Math.max(0, Math.min(100, (90 - parseFloat(score)) / 90 * 100));
+          break;
+        case 'stopwatch':
+          // 3秒挑战（简单难度）：误差越小越好，假设0.3秒为满分
+          progress = Math.max(0, Math.min(100, (0.3 - Math.abs(parseFloat(score) - 3)) / 0.3 * 100));
+          break;
+        case 'mouse':
+          // 鼠标轨迹（中等难度）：完成度越高越好
+          progress = Math.min(100, parseFloat(score));
+          break;
+        case 'reaction':
+          // 反应测试（简单难度）：时间越短越好，假设150ms为满分
+          progress = Math.max(0, Math.min(100, (150 - parseFloat(score)) / 150 * 100));
+          break;
+      }
+      progressBar.style.width = `${progress}%`;
+    }
+  });
 }
 
 // 页面初始化
@@ -288,7 +468,11 @@ function initPage() {
   updateCountdown();
   renderOffWorkTimeInput();
   updateStats();
+  updateDailyStats();
+  updateStatProgress();
   initNavigation();
+  initGameFilters();
+  initThemeToggle();
   showSection('home');
   
   // 设置定时器
@@ -296,6 +480,88 @@ function initPage() {
   
   // 添加一些交互效果
   addInteractiveEffects();
+}
+
+// 初始化游戏筛选器
+function initGameFilters() {
+  const difficultyFilter = document.getElementById('difficulty-filter');
+  const categoryFilter = document.getElementById('category-filter');
+  const sortButton = document.getElementById('sort-by-score');
+  
+  if (difficultyFilter) {
+    difficultyFilter.addEventListener('change', renderGameHall);
+  }
+  
+  if (categoryFilter) {
+    categoryFilter.addEventListener('change', renderGameHall);
+  }
+  
+  if (sortButton) {
+    sortButton.addEventListener('click', () => {
+      // 切换排序状态
+      sortButton.classList.toggle('active');
+      renderGameHall();
+    });
+  }
+  
+  // 为推荐卡片添加点击事件
+  document.querySelectorAll('.recommendation-card').forEach((card, index) => {
+    card.addEventListener('click', () => {
+      const recommendations = [
+        () => showSection('games'), // 热门游戏 - 显示所有游戏
+        () => {
+          // 快速游戏 - 推荐简单难度的游戏
+          const easyGames = games.filter(g => g.difficulty === 'easy');
+          if (easyGames.length > 0) {
+            const randomGame = easyGames[Math.floor(Math.random() * easyGames.length)];
+            if (randomGame.key === 'stopwatch') {
+              window.open('games/stopwatch/stopwatch.html', '_blank');
+            } else if (randomGame.key === 'reaction') {
+              window.open('games/reaction/reaction.html', '_blank');
+            }
+          }
+        },
+        () => {
+          // 挑战模式 - 推荐困难难度的游戏
+          const hardGames = games.filter(g => g.difficulty === 'hard');
+          if (hardGames.length > 0) {
+            const randomGame = hardGames[Math.floor(Math.random() * hardGames.length)];
+            if (randomGame.key === 'image_puzzle') {
+              window.open('games/image-puzzle/image-puzzle.html', '_blank');
+            }
+          }
+        }
+      ];
+      if (recommendations[index]) {
+        recommendations[index]();
+      }
+    });
+  });
+}
+
+// 主题切换功能
+function initThemeToggle() {
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeIcon = themeToggle?.querySelector('.theme-icon');
+  
+  // 从localStorage读取主题设置
+  const currentTheme = localStorage.getItem('theme') || 'light';
+  if (currentTheme === 'dark') {
+    document.body.classList.add('dark-theme');
+    if (themeIcon) themeIcon.textContent = '☀️';
+  }
+  
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      const isDark = document.body.classList.toggle('dark-theme');
+      const newTheme = isDark ? 'dark' : 'light';
+      localStorage.setItem('theme', newTheme);
+      
+      if (themeIcon) {
+        themeIcon.textContent = isDark ? '☀️' : '🌙';
+      }
+    });
+  }
 }
 
 function addInteractiveEffects() {

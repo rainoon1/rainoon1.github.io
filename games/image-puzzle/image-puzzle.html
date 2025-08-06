@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>图片拼图 - 摸鱼游戏小站</title>
+  <link rel="stylesheet" href="../../style.css">
+  <style>
+    body { 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      font-family: 'Arial', sans-serif;
+    }
+    .game-header {
+      text-align: center;
+      margin: 20px auto;
+      color: white;
+      max-width: 1400px;
+      padding: 0 20px;
+    }
+    .game-header h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+    .game-header p {
+      font-size: 1.1em;
+      opacity: 0.9;
+      margin-bottom: 20px;
+    }
+    .back-button {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 10px 20px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 25px;
+      text-decoration: none;
+      display: inline-block;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+    }
+    .back-button:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+    .puzzle-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .puzzle-controls {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      width: 1400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .control-group {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+    }
+    .control-group label {
+      font-weight: 500;
+    }
+    .control-group select {
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: white;
+      font-size: 1em;
+    }
+    .control-group select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+    }
+    .control-group select option {
+      background: #333;
+      color: white;
+    }
+    .control-group input[type="file"] {
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: white;
+      font-size: 0.9em;
+    }
+    .start-button {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 25px;
+      font-size: 1.1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    .start-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+    .puzzle-board {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 40px 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0 auto;
+      min-height: 450px;
+      width: 1400px;
+    }
+    .puzzle-info {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 20px;
+      margin-top: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      text-align: center;
+      color: white;
+      width: 1400px;
+      height: auto;
+      min-height: 120px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .image-cell {
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      user-select: none;
+      overflow: hidden;
+      position: relative;
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .image-cell:hover {
+      transform: scale(1.02);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      border-color: rgba(255, 255, 255, 0.6);
+    }
+    .image-cell.empty {
+      border: 2px dashed rgba(255, 255, 255, 0.3);
+      background: transparent;
+    }
+    .image-cell.empty:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.6);
+    }
+    .image-cell img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin: 0 auto;
+      width: 66.67%;
+      align-items: center;
+      justify-content: center;
+    }
+    .stat-item {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 15px;
+      text-align: center;
+      min-height: 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .stat-value {
+      font-size: 1.8em;
+      font-weight: bold;
+      margin-bottom: 5px;
+      line-height: 1.2;
+    }
+    .stat-label {
+      font-size: 0.9em;
+      opacity: 0.8;
+      line-height: 1.2;
+    }
+    .image-preview {
+      max-width: 200px;
+      max-height: 150px;
+      border-radius: 10px;
+      margin: 10px auto;
+      display: block;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+    @media (max-width: 768px) {
+      .game-header {
+        padding: 0 10px;
+      }
+      .game-header h1 {
+        font-size: 2em;
+      }
+      .control-group {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .puzzle-container {
+        padding: 10px;
+      }
+      .puzzle-controls {
+        width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+      }
+      .puzzle-board {
+        width: 100%;
+        height: auto;
+        min-height: 450px;
+        padding: 30px 15px;
+        margin-left: 0;
+        margin-right: 0;
+      }
+      .puzzle-info {
+        width: 100%;
+        height: auto;
+        min-height: 100px;
+        margin-left: 0;
+        margin-right: 0;
+        padding: 15px;
+      }
+      .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin: 0 auto;
+        width: 85%;
+        align-items: center;
+        justify-content: center;
+      }
+      .stat-item {
+        padding: 10px;
+        min-height: 50px;
+      }
+      .stat-value {
+        font-size: 1.5em;
+        line-height: 1.2;
+      }
+      .stat-label {
+        line-height: 1.2;
+      }
+    }
+
+    /* 动画定义 */
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.05);
+      }
+    }
+
+    .image-cell.correct {
+      animation: pulse 0.6s ease;
+    }
+
+    .puzzle-board {
+      animation: fadeIn 0.5s ease;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gravity-bg" style="position:fixed;z-index:-1;top:0;left:0;width:100vw;height:100vh;"></canvas>
+  
+  <div class="game-header">
+    <a href="../../index.html" class="back-button">← 返回大厅</a>
+    <h1>🖼️ 图片拼图</h1>
+    <p>将打乱的图片碎片拼回原图，挑战你的视觉记忆能力！</p>
+  </div>
+
+  <div class="puzzle-container">
+    <div class="puzzle-controls">
+      <div class="control-group">
+        <label>难度等级：
+          <select id="puzzle-size">
+            <option value="3">3×3 (简单)</option>
+            <option value="4" selected>4×4 (中等)</option>
+            <option value="5">5×5 (困难)</option>
+          </select>
+        </label>
+        <label>图库：
+          <select id="image-library">
+            <option value="default">默认图库</option>
+            <option value="conan">柯南系列</option>
+          </select>
+        </label>
+        <label>图片：
+          <select id="image-select">
+            <option value="">选择图片...</option>
+          </select>
+        </label>
+      </div>
+      <div class="control-group">
+        <label>或上传图片：
+          <input type="file" id="image-upload" accept="image/jpeg,image/png,image/webp">
+        </label>
+        <button id="start-game" class="start-button">开始游戏</button>
+        <button id="reset-game" class="start-button" style="background: rgba(255, 255, 255, 0.2);">重新开始</button>
+      </div>
+      <div id="image-preview-container" style="text-align: center; display: none;">
+        <img id="image-preview" class="image-preview" alt="预览图">
+      </div>
+    </div>
+
+    <div class="puzzle-board" id="puzzle-board">
+      <div style="text-align: center; color: white; opacity: 0.8;">
+        <div style="font-size: 3em; margin-bottom: 20px;">🖼️</div>
+        <h3>选择图片并点击"开始游戏"</h3>
+        <p>将图片碎片拼回原图，空格在最后一格</p>
+        <div style="margin-top: 20px; font-size: 0.9em; opacity: 0.7;">
+          <p>💡 提示：可以使用鼠标点击或方向键移动拼图块</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="puzzle-info">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value" id="moves-count">0</div>
+          <div class="stat-label">移动步数</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="timer">00:00</div>
+          <div class="stat-label">用时</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="best-score">--</div>
+          <div class="stat-label">最佳记录</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../gravity-balls.js"></script>
+  <script src="image-puzzle.js"></script>
+</body>
+</html> 
