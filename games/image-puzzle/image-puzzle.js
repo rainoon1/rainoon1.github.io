@@ -20,7 +20,7 @@ class ImagePuzzle {
     
     // 默认图库（备用）
     this.defaultImageLibrary = {
-      default: [
+      '默认': [
         '../../assets/默认/1 (1).jpg',
         '../../assets/默认/1 (4).jpg',
         '../../assets/默认/1 (5).jpg',
@@ -29,7 +29,7 @@ class ImagePuzzle {
         '../../assets/默认/1 (17).jpg',
         '../../assets/默认/1 (19).jpg'
       ],
-      conan: [
+      '柯南': [
         '../../assets/柯南/柯南-1.png',
         '../../assets/柯南/柯南-2.png',
         '../../assets/柯南/小兰-1.png',
@@ -76,8 +76,10 @@ class ImagePuzzle {
       // 转换数据格式，保持与默认图库相同的结构
       this.imageLibrary = {};
       Object.entries(data).forEach(([dir, files]) => {
-        const key = dir || 'default';
-        this.imageLibrary[key] = files.map(f => dir ? `../../assets/${dir}/${f}` : `../../assets/${f}`);
+        const key = dir; // Use the actual directory name as key
+        // 确保路径正确
+        const basePath = `../../assets/${dir}`;
+        this.imageLibrary[key] = files.map(f => `${basePath}/${f}`);
       });
       
       this.imageLibraryLoaded = true;
@@ -95,8 +97,8 @@ class ImagePuzzle {
     try {
       // 定义要扫描的目录
       const directories = [
-        { path: '../../assets/默认', name: 'default', label: '默认图库' },
-        { path: '../../assets/柯南', name: 'conan', label: '柯南系列' }
+        { path: '../../assets/默认', name: '默认', label: '默认图库' }, // Default images are in 默认 directory
+        { path: '../../assets/柯南', name: '柯南', label: '柯南系列' }
         // 可以继续添加更多目录
       ];
       
@@ -237,14 +239,31 @@ class ImagePuzzle {
     // 确保图库已加载
     await this.loadImageLibrary();
     
+    // 保存当前选中的图库
+    const currentSelectedLibrary = librarySelect.value;
+    
     // 动态更新图库选择器
     librarySelect.innerHTML = '';
+    
+    // 定义图库显示名称映射
+    const libraryLabels = {
+      '默认': '默认图库',
+      '柯南': '柯南系列'
+    };
+    
     Object.keys(this.imageLibrary).forEach(key => {
       const option = document.createElement('option');
       option.value = key;
-      option.textContent = key === 'default' ? '默认图库' : key;
+      option.textContent = libraryLabels[key] || key;
       librarySelect.appendChild(option);
     });
+    
+    // 恢复选中的图库，如果不存在则选择第一个
+    if (currentSelectedLibrary && this.imageLibrary[currentSelectedLibrary]) {
+      librarySelect.value = currentSelectedLibrary;
+    } else if (Object.keys(this.imageLibrary).length > 0) {
+      librarySelect.value = Object.keys(this.imageLibrary)[0];
+    }
     
     // 清空图片选择器
     imageSelect.innerHTML = '<option value="">选择图片...</option>';
@@ -650,13 +669,9 @@ class ImagePuzzle {
           const px = idx % this.size;
           const py = Math.floor(idx / this.size);
           
-          // 使用CSS background-image方式，更稳定可靠
+          // 使用CSS background方式实现图片切片
           const bgImg = this.customImage || this.currentImage;
-          cell.style.backgroundImage = `url('${bgImg}')`;
-          cell.style.backgroundSize = `${this.size * 100}% ${this.size * 100}%`;
-          cell.style.backgroundPosition = `${px / (this.size - 1) * 100}% ${py / (this.size - 1) * 100}%`;
-          cell.style.backgroundRepeat = 'no-repeat';
-          cell.style.background = `#fff url('${bgImg}') no-repeat ${px / (this.size - 1) * 100}% ${py / (this.size - 1) * 100}% / ${this.size * 100}% ${this.size * 100}%`;
+          cell.style.background = `url('${bgImg}') no-repeat ${px / (this.size - 1) * 100}% ${py / (this.size - 1) * 100}% / ${this.size * 100}% ${this.size * 100}%`;
         }
         
         cell.addEventListener('click', () => this.tryMove(x, y));
