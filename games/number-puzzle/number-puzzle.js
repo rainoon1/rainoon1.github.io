@@ -22,6 +22,7 @@ class NumberPuzzle {
   bindEvents() {
     document.getElementById('start-game').addEventListener('click', () => this.startGame());
     document.getElementById('reset-game').addEventListener('click', () => this.resetGame());
+    document.getElementById('history-btn').addEventListener('click', () => this.showHistory());
     document.getElementById('puzzle-size').addEventListener('change', (e) => {
       this.size = parseInt(e.target.value);
       this.resetGame();

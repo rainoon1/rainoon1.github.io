@@ -176,8 +176,9 @@ body.dark-theme .theme-toggle:hover {
 .hero-subtitle {
   font-size: 1.3em;
   margin-bottom: 40px;
-  opacity: 0.9;
-  font-weight: 300;
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: 400;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .countdown-container {
@@ -199,8 +200,9 @@ body.dark-theme .theme-toggle:hover {
 
 .countdown-label {
   font-size: 1.1em;
-  opacity: 0.8;
-  font-weight: 300;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 /* 英雄区域按钮 */
@@ -302,24 +304,26 @@ body.dark-theme .theme-toggle:hover {
 .stat-number {
   font-size: 2.5em;
   font-weight: bold;
-  color: #fff;
+  color: #87CEEB;
   margin-bottom: 10px;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 .stat-label {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.85);
   font-size: 1em;
-  font-weight: 300;
+  font-weight: 500;
   margin-bottom: 5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .stat-mode {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.85);
   font-size: 0.8em;
-  font-weight: 300;
+  font-weight: 400;
   font-style: italic;
   margin-bottom: 10px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .stat-progress {
@@ -393,9 +397,10 @@ body.dark-theme .theme-toggle:hover {
 }
 
 .daily-stat-label {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.9);
   font-size: 0.9em;
-  font-weight: 300;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 /* 区域标题 */
@@ -465,6 +470,17 @@ body.dark-theme .theme-toggle:hover {
   font-size: 0.9em;
   cursor: pointer;
   transition: all 0.3s ease;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px;
+  padding-right: 32px;
+  /* 确保默认状态下文字可见 */
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
 }
 
 .filter-select:focus {
@@ -474,8 +490,97 @@ body.dark-theme .theme-toggle:hover {
 }
 
 .filter-select option {
-  background: #333;
+  background: #2c3e50 !important;
+  color: white !important;
+  padding: 8px;
+  font-size: 0.9em;
+  border: none;
+  /* 确保选项在所有浏览器中都有正确的样式 */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* 为不同浏览器的选项添加样式 */
+.filter-select optgroup {
+  background: #34495e !important;
+  color: white !important;
+  font-weight: bold;
+}
+
+/* 确保选择框在展开状态下也有正确的样式 */
+.filter-select:focus option {
+  background: #2c3e50 !important;
+  color: white !important;
+}
+
+/* 为选择框添加更好的可见性 */
+.filter-select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* 确保选择框在所有状态下都有正确的样式 */
+.filter-select,
+.filter-select:active,
+.filter-select:visited {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+}
+
+/* 强制覆盖浏览器默认样式 */
+.filter-select::-webkit-select-placeholder,
+.filter-select::-moz-placeholder,
+.filter-select::placeholder {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* 确保选择框在暗色主题下也有良好的可见性 */
+body.dark-theme .filter-select {
+  background: rgba(255, 255, 255, 0.15);
   color: white;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+body.dark-theme .filter-select option {
+  background: #1a252f;
+  color: white;
+}
+
+/* 为不同浏览器添加选择框样式 */
+.filter-select::-ms-expand {
+  display: none;
+}
+
+/* 为Firefox添加特殊样式 */
+@-moz-document url-prefix() {
+  .filter-select {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+  }
+  
+  .filter-select option {
+    background-color: #2c3e50 !important;
+    color: white !important;
+  }
+}
+
+/* 为Safari和Chrome添加特殊样式 */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  .filter-select {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+  }
+}
+
+/* 选择框悬停效果 */
+.filter-select:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  color: white !important;
 }
 
 .filter-button {
@@ -590,6 +695,35 @@ body.dark-theme .theme-toggle:hover {
   opacity: 0.8;
 }
 
+/* 游戏按钮样式优化 */
+.game-play-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 8px rgba(102,126,234,0.3) !important;
+  border: none !important;
+  transition: all 0.3s ease !important;
+}
+
+.game-play-btn:hover {
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(102,126,234,0.4) !important;
+}
+
+.game-history-btn {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: white !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  transition: all 0.3s ease !important;
+}
+
+.game-history-btn:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  transform: translateY(-1px) !important;
+}
+
 /* 关于页面样式 */
 .about-content {
   display: grid;
@@ -670,10 +804,11 @@ body.dark-theme .theme-toggle:hover {
 
 .footer-link {
   display: block;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.9);
   text-decoration: none;
   padding: 5px 0;
   transition: color 0.3s ease;
+  font-weight: 400;
 }
 
 .footer-link:hover {

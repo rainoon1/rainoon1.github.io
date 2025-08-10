@@ -363,7 +363,7 @@ function renderGameHall() {
     };
     
     return `
-      <div class="game-card" onclick="window.open('${href}', '_blank')">
+      <div class="game-card">
         <div style="font-size:3em;margin-bottom:15px;">${g.icon}</div>
         <div style="font-size:1.3em;font-weight:bold;margin-bottom:10px;">${g.name}</div>
         <div style="font-size:0.9em;opacity:0.8;margin-bottom:10px;">${g.description}</div>
@@ -372,7 +372,15 @@ function renderGameHall() {
           <span style="background:rgba(255,255,255,0.2);padding:2px 8px;border-radius:10px;font-size:0.8em;">${g.estimatedTime}</span>
         </div>
         <div style="font-size:0.8em;opacity:0.6;margin-bottom:8px;font-style:italic;">${gameModes[index]}</div>
-        <div style="font-size:0.9em;opacity:0.7;">最佳成绩: ${formattedScore}</div>
+        <div style="font-size:0.9em;opacity:0.7;margin-bottom:10px;">最佳成绩: ${formattedScore}</div>
+        <div style="display:flex;gap:8px;justify-content:center;">
+          <button class="game-play-btn" onclick="window.open('${href}', '_blank')" style="flex:1;padding:8px 12px;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;border:none;border-radius:6px;cursor:pointer;font-size:0.9em;transition:all 0.3s ease;font-weight:600;box-shadow:0 2px 8px rgba(102,126,234,0.3);">
+            🎮 开始游戏
+          </button>
+          <button class="game-history-btn" onclick="showGameHistory('${g.key}', '${g.key === 'number_puzzle' ? '3x3' : g.key === 'image_puzzle' ? '4x4' : 'default'}')" style="padding:8px 12px;background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.3);border-radius:6px;cursor:pointer;font-size:0.9em;transition:all 0.3s ease;">
+            📊 历史记录
+          </button>
+        </div>
       </div>
     `;
   }).join('');
@@ -480,6 +488,9 @@ function initPage() {
   
   // 添加一些交互效果
   addInteractiveEffects();
+  
+  // 初始化游戏历史管理器
+  initGameHistory();
 }
 
 // 初始化游戏筛选器
@@ -577,12 +588,31 @@ function addInteractiveEffects() {
   
   // 为游戏卡片添加点击效果
   document.querySelectorAll('.game-card').forEach(card => {
-    card.addEventListener('click', () => {
-      card.style.transform = 'scale(0.98)';
-      setTimeout(() => {
-        card.style.transform = '';
-      }, 150);
-    });
+    // 为游戏按钮添加悬停效果
+    const playBtn = card.querySelector('.game-play-btn');
+    const historyBtn = card.querySelector('.game-history-btn');
+    
+    if (playBtn) {
+      playBtn.addEventListener('mouseenter', () => {
+        playBtn.style.background = 'rgba(102,126,234,1)';
+        playBtn.style.transform = 'scale(1.05)';
+      });
+      playBtn.addEventListener('mouseleave', () => {
+        playBtn.style.background = 'rgba(102,126,234,0.8)';
+        playBtn.style.transform = 'scale(1)';
+      });
+    }
+    
+    if (historyBtn) {
+      historyBtn.addEventListener('mouseenter', () => {
+        historyBtn.style.background = 'rgba(255,255,255,0.3)';
+        historyBtn.style.transform = 'scale(1.05)';
+      });
+      historyBtn.addEventListener('mouseleave', () => {
+        historyBtn.style.background = 'rgba(255,255,255,0.2)';
+        historyBtn.style.transform = 'scale(1)';
+      });
+    }
   });
 }
 
@@ -614,6 +644,57 @@ window.addEventListener('DOMContentLoaded', () => {
 
 window.addEventListener('hashchange', handleHashChange);
 
+// 初始化游戏历史管理器
+function initGameHistory() {
+  // 等待游戏历史管理器加载完成
+  if (window.gameHistoryManager) {
+    console.log('游戏历史管理器已加载');
+    
+    // 添加一些测试数据（如果还没有数据的话）
+    addSampleGameHistory();
+  } else {
+    // 如果还没有加载，等待一下再试
+    setTimeout(initGameHistory, 100);
+  }
+}
+
+// 添加示例游戏历史数据
+function addSampleGameHistory() {
+  const games = ['number_puzzle', 'image_puzzle', 'stopwatch', 'mouse', 'reaction'];
+  
+  games.forEach(gameType => {
+    let difficulty = 'default';
+    if (gameType === 'number_puzzle') difficulty = '3x3';
+    if (gameType === 'image_puzzle') difficulty = '4x4';
+    
+    // 检查是否已有数据
+    const existingHistory = window.gameHistoryManager.getGameHistory(gameType, difficulty);
+    if (existingHistory.length === 0) {
+      // 添加一些示例数据
+      for (let i = 0; i < 5; i++) {
+        const scoreData = {
+          score: Math.floor(Math.random() * 100) + 20,
+          moves: Math.floor(Math.random() * 50) + 10,
+          timeSpent: (Math.floor(Math.random() * 300) + 60) * 1000, // 1-6分钟
+          completed: Math.random() > 0.1 // 90%完成率
+        };
+        
+        window.gameHistoryManager.recordGameScore(gameType, difficulty, scoreData);
+      }
+    }
+  });
+}
+
+// 显示游戏历史记录
+function showGameHistory(gameType, difficulty) {
+  if (window.historyModal) {
+    window.historyModal.show(gameType, difficulty);
+  } else {
+    console.error('历史弹窗组件未加载');
+  }
+}
+
 // 导出函数供其他模块使用
 window.recordGamePlay = recordGamePlay;
-window.updateStats = updateStats; 
+window.updateStats = updateStats;
+window.showGameHistory = showGameHistory; 
