@@ -107,7 +107,25 @@ function updateStats() {
   const gameModes = ['3×3数字拼图', '4×4图片拼图', '3秒动态秒表', '默认模式', '挑战1次'];
   
   games.forEach((game, index) => {
-    let score = localStorage.getItem(`record_${game}`) || '--';
+    let score = '--';
+    
+    // 优先从 gameHistoryManager 获取新格式成绩
+    if (window.gameHistoryManager) {
+      try {
+        const bestScore = window.gameHistoryManager.getGameBestScoreCompatible(game, 'default');
+        if (bestScore !== null) {
+          score = bestScore;
+        }
+      } catch (e) {
+        console.log(`无法从 gameHistoryManager 获取 ${game} 的成绩:`, e);
+      }
+    }
+    
+    // 如果新格式没有数据，尝试从旧格式获取（兼容性）
+    if (score === '--') {
+      const oldScore = localStorage.getItem(`record_${game}`);
+      score = oldScore || '--';
+    }
     
     // 格式化成绩显示
     if (score !== '--') {
@@ -121,15 +139,15 @@ function updateStats() {
           score = `${score}秒`;
           break;
         case 'stopwatch':
-          // 3秒挑战显示误差值
-          score = `${score}秒`;
+          // 3秒挑战显示误差值（毫秒级）
+          score = `${score}ms`;
           break;
         case 'mouse':
           // 鼠标轨迹显示完成度
           score = `${score}%`;
           break;
         case 'reaction':
-          // 反应测试显示反应时间
+          // 反应测试显示反应时间（毫秒级）
           score = `${score}ms`;
           break;
       }
@@ -148,6 +166,42 @@ function updateStats() {
           </div>
         </div>
       `;
+      
+      // 添加点击事件，跳转到对应游戏
+      statCard.onclick = () => {
+        let gameUrl = '';
+        switch (game) {
+          case 'number_puzzle':
+            gameUrl = 'games/number-puzzle/number-puzzle.html';
+            break;
+          case 'image_puzzle':
+            gameUrl = 'games/image-puzzle/image-puzzle.html';
+            break;
+          case 'stopwatch':
+            gameUrl = 'games/stopwatch/stopwatch.html';
+            break;
+          case 'mouse':
+            gameUrl = 'games/mouse/mouse.html';
+            break;
+          case 'reaction':
+            gameUrl = 'games/reaction/reaction.html';
+            break;
+        }
+        
+        if (gameUrl) {
+          // 添加点击反馈效果
+          statCard.style.transform = 'scale(0.95)';
+          setTimeout(() => {
+            statCard.style.transform = '';
+            // 跳转到游戏页面
+            window.open(gameUrl, '_blank');
+          }, 150);
+        }
+      };
+      
+      // 添加鼠标悬停效果
+      statCard.style.cursor = 'pointer';
+      statCard.title = `点击开始${gameNames[index]}`;
     }
   });
   
@@ -176,14 +230,65 @@ function recordGamePlay(gameKey, duration = 0) {
 }
 
 function getBestScore() {
-  const games = ['puzzle', 'stopwatch', 'mouse', 'reaction'];
+  const games = ['number_puzzle', 'image_puzzle', 'stopwatch', 'mouse', 'reaction'];
   let best = '--';
+  let bestGame = '';
   
   games.forEach(game => {
-    const score = localStorage.getItem(`record_${game}`);
-    if (score && score !== '--') {
-      if (best === '--' || parseFloat(score) < parseFloat(best)) {
-        best = score;
+    let score = null;
+    
+    // 优先从新格式获取成绩
+    if (window.gameHistoryManager) {
+      try {
+        score = window.gameHistoryManager.getGameBestScoreCompatible(game, 'default');
+      } catch (e) {
+        console.log(`无法从 gameHistoryManager 获取 ${game} 的成绩:`, e);
+      }
+    }
+    
+    // 如果新格式没有数据，尝试从旧格式获取（兼容性）
+    if (score === null) {
+      const oldScore = localStorage.getItem(`record_${game}`);
+      if (oldScore && oldScore !== '--') {
+        score = parseFloat(oldScore);
+      }
+    }
+    
+    if (score !== null && score !== '--') {
+      let normalizedScore = score;
+      
+      // 根据游戏类型标准化成绩（越小越好）
+      switch (game) {
+        case 'number_puzzle':
+        case 'image_puzzle':
+          // 拼图游戏：完成时间，越小越好
+          if (best === '--' || normalizedScore < parseFloat(best)) {
+            best = score;
+            bestGame = game;
+          }
+          break;
+        case 'stopwatch':
+          // 3秒挑战：误差值，越小越好
+          if (best === '--' || normalizedScore < parseFloat(best)) {
+            best = score;
+            bestGame = game;
+          }
+          break;
+        case 'mouse':
+          // 鼠标轨迹：完成度，越大越好，但这里我们找最小的（100-完成度）
+          const mouseScore = 100 - normalizedScore;
+          if (best === '--' || mouseScore < parseFloat(best)) {
+            best = score;
+            bestGame = game;
+          }
+          break;
+        case 'reaction':
+          // 反应测试：反应时间，越小越好
+          if (best === '--' || normalizedScore < parseFloat(best)) {
+            best = score;
+            bestGame = game;
+          }
+          break;
       }
     }
   });
@@ -299,6 +404,20 @@ const games = [
 
 function loadBestScores() {
   games.forEach(g => {
+    // 优先从新格式获取最佳成绩
+    if (window.gameHistoryManager) {
+      try {
+        const bestScore = window.gameHistoryManager.getGameBestScoreCompatible(g.key, 'default');
+        if (bestScore !== null) {
+          g.best = bestScore;
+          return;
+        }
+      } catch (e) {
+        console.log(`无法从 gameHistoryManager 获取 ${g.key} 的成绩:`, e);
+      }
+    }
+    
+    // 如果新格式没有数据，尝试从旧格式获取（兼容性）
     g.best = localStorage.getItem(`record_${g.key}`) || '--';
   });
 }
@@ -338,7 +457,7 @@ function renderGameHall() {
           formattedScore = `${g.best}秒`;
           break;
         case 'stopwatch':
-          formattedScore = `${g.best}秒`;
+          formattedScore = `${g.best}ms`;
           break;
         case 'mouse':
           formattedScore = `${g.best}%`;
@@ -409,9 +528,27 @@ function updateDailyStats() {
   let bestGame = '';
   
   games.forEach(game => {
-    const score = localStorage.getItem(`record_${game}`);
-    if (score && score !== '--') {
-      if (bestScore === '--' || parseFloat(score) < parseFloat(bestScore)) {
+    let score = null;
+    
+    // 优先从新格式获取最佳成绩
+    if (window.gameHistoryManager) {
+      try {
+        score = window.gameHistoryManager.getGameBestScoreCompatible(game, 'default');
+      } catch (e) {
+        console.log(`无法从 gameHistoryManager 获取 ${game} 的成绩:`, e);
+      }
+    }
+    
+    // 如果新格式没有数据，尝试从旧格式获取（兼容性）
+    if (score === null) {
+      const oldScore = localStorage.getItem(`record_${game}`);
+      if (oldScore && oldScore !== '--') {
+        score = parseFloat(oldScore);
+      }
+    }
+    
+    if (score !== null && score !== '--') {
+      if (bestScore === '--' || score < parseFloat(bestScore)) {
         bestScore = score;
         bestGame = game;
       }
@@ -426,7 +563,26 @@ function updateDailyStats() {
       mouse: '鼠标轨迹', 
       reaction: '反应测试' 
     };
-    document.getElementById('today-best').textContent = `${gameNames[bestGame]} ${bestScore}`;
+    
+    // 根据游戏类型添加单位
+    let formattedScore = bestScore;
+    switch (bestGame) {
+      case 'number_puzzle':
+      case 'image_puzzle':
+        formattedScore = `${bestScore}秒`;
+        break;
+      case 'stopwatch':
+        formattedScore = `${bestScore}ms`;
+        break;
+      case 'mouse':
+        formattedScore = `${bestScore}%`;
+        break;
+      case 'reaction':
+        formattedScore = `${bestScore}ms`;
+        break;
+    }
+    
+    document.getElementById('today-best').textContent = `${gameNames[bestGame]} ${formattedScore}`;
   }
 }
 
@@ -435,32 +591,50 @@ function updateStatProgress() {
   const games = ['number_puzzle', 'image_puzzle', 'stopwatch', 'mouse', 'reaction'];
   
   games.forEach(game => {
-    const score = localStorage.getItem(`record_${game}`);
+    let score = null;
+    
+    // 优先从新格式获取最佳成绩
+    if (window.gameHistoryManager) {
+      try {
+        score = window.gameHistoryManager.getGameBestScoreCompatible(game, 'default');
+      } catch (e) {
+        console.log(`无法从 gameHistoryManager 获取 ${game} 的成绩:`, e);
+      }
+    }
+    
+    // 如果新格式没有数据，尝试从旧格式获取（兼容性）
+    if (score === null) {
+      const oldScore = localStorage.getItem(`record_${game}`);
+      if (oldScore && oldScore !== '--') {
+        score = parseFloat(oldScore);
+      }
+    }
+    
     const progressBar = document.querySelector(`#stat-${game} .progress-fill`);
     
-    if (progressBar && score !== '--') {
+    if (progressBar && score !== null && score !== '--') {
       // 根据游戏类型设置不同的进度计算方式
       let progress = 0;
       switch (game) {
         case 'number_puzzle':
           // 数字拼图（中等难度）：时间越短越好，假设45秒为满分
-          progress = Math.max(0, Math.min(100, (45 - parseFloat(score)) / 45 * 100));
+          progress = Math.max(0, Math.min(100, (45 - score) / 45 * 100));
           break;
         case 'image_puzzle':
           // 图片拼图（困难难度）：时间越短越好，假设90秒为满分
-          progress = Math.max(0, Math.min(100, (90 - parseFloat(score)) / 90 * 100));
+          progress = Math.max(0, Math.min(100, (90 - score) / 90 * 100));
           break;
         case 'stopwatch':
-          // 3秒挑战（简单难度）：误差越小越好，假设0.3秒为满分
-          progress = Math.max(0, Math.min(100, (0.3 - Math.abs(parseFloat(score) - 3)) / 0.3 * 100));
+          // 3秒挑战（简单难度）：误差越小越好，假设300ms为满分
+          progress = Math.max(0, Math.min(100, (300 - score) / 300 * 100));
           break;
         case 'mouse':
           // 鼠标轨迹（中等难度）：完成度越高越好
-          progress = Math.min(100, parseFloat(score));
+          progress = Math.min(100, score);
           break;
         case 'reaction':
           // 反应测试（简单难度）：时间越短越好，假设150ms为满分
-          progress = Math.max(0, Math.min(100, (150 - parseFloat(score)) / 150 * 100));
+          progress = Math.max(0, Math.min(100, (150 - score) / 150 * 100));
           break;
       }
       progressBar.style.width = `${progress}%`;
@@ -563,16 +737,6 @@ function initThemeToggle() {
 }
 
 function addInteractiveEffects() {
-  // 为统计卡片添加点击效果
-  document.querySelectorAll('.stat-card').forEach(card => {
-    card.addEventListener('click', () => {
-      card.style.transform = 'scale(0.95)';
-      setTimeout(() => {
-        card.style.transform = '';
-      }, 150);
-    });
-  });
-  
   // 为游戏卡片添加点击效果
   document.querySelectorAll('.game-card').forEach(card => {
     // 为游戏按钮添加悬停效果
@@ -625,45 +789,14 @@ function initGameHistory() {
   if (window.gameHistoryManager) {
     console.log('游戏历史管理器已加载');
     
-    // 添加一些测试数据（如果还没有数据的话）
-    addSampleGameHistory();
+    // 不再自动添加示例数据，让用户自己产生真实数据
+    
+    // 重新更新统计信息，显示从 gameHistoryManager 获取的成绩
+    updateStats();
   } else {
     // 如果还没有加载，等待一下再试
     setTimeout(initGameHistory, 100);
   }
-}
-
-// 添加示例游戏历史数据
-function addSampleGameHistory() {
-  const games = ['number_puzzle', 'image_puzzle', 'stopwatch', 'mouse', 'reaction'];
-  
-  games.forEach(gameType => {
-    let difficulties = ['default'];
-    
-    // 为不同游戏类型设置不同难度
-    if (gameType === 'number_puzzle') {
-      difficulties = ['3x3', '4x4', '5x5'];
-    } else if (gameType === 'image_puzzle') {
-      difficulties = ['4x4', '6x6', '8x8'];
-    }
-    
-    difficulties.forEach(difficulty => {
-      // 检查是否已有数据
-      const existingHistory = window.gameHistoryManager.getGameHistory(gameType, difficulty);
-      if (existingHistory.length === 0) {
-        // 为每个难度添加30条示例数据，确保能测试分页功能
-        for (let i = 0; i < 30; i++) {
-          const scoreData = {
-            score: Math.floor(Math.random() * 100) + 20,
-            moves: Math.floor(Math.random() * 50) + 10,
-            timeSpent: (Math.floor(Math.random() * 300) + 60) * 1000 // 1-6分钟
-          };
-          
-          window.gameHistoryManager.recordGameScore(gameType, difficulty, scoreData);
-        }
-      }
-    });
-  });
 }
 
 // 导出函数供其他模块使用

@@ -132,11 +132,22 @@ class ReactionGame {
         timeSpent: 0
       };
       
+      // 记录游戏成绩到新格式
       window.gameHistoryManager.recordGameScore(
         'reaction',
         'default',
         scoreData
       );
+      
+      // 不再写入旧格式，统一使用新格式
+      // 检查是否是最佳成绩并更新显示
+      if (window.gameHistoryManager) {
+        const currentBest = window.gameHistoryManager.getGameBestScore('reaction', 'default');
+        if (currentBest === null || parseFloat(reactionTime) < currentBest) {
+          // 更新最佳成绩显示
+          this.updateBestScoreDisplay(parseFloat(reactionTime));
+        }
+      }
     }
   }
 
@@ -164,6 +175,13 @@ class ReactionGame {
       this.bests[this.mode] = val;
       this.saveBests();
     }
+  }
+
+  // 更新最佳成绩显示（用于新格式）
+  updateBestScoreDisplay(score) {
+    // 这里可以添加更新最佳成绩显示的逻辑
+    // 由于反应测试游戏有自己的最佳成绩系统，暂时不实现
+    console.log(`新的最佳成绩: ${score}ms`);
   }
 
   // 渲染主界面

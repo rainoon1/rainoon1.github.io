@@ -28,6 +28,31 @@ class MouseTrackGame {
     }
   }
 
+  // 更新最佳成绩显示
+  updateBestScoreDisplay(score) {
+    // 这里可以添加更新最佳成绩显示的逻辑
+    // 由于鼠标轨迹游戏没有专门的最佳成绩显示区域，暂时不实现
+    console.log(`新的最佳成绩: ${score}分`);
+  }
+
+  // 加载最佳成绩
+  loadBestScore() {
+    // 优先从新格式获取最佳成绩
+    if (window.gameHistoryManager) {
+      const bestScore = window.gameHistoryManager.getGameBestScoreCompatible('mouse', 'default');
+      if (bestScore !== null) {
+        this.updateBestScoreDisplay(bestScore);
+        return;
+      }
+    }
+    
+    // 兼容旧格式（如果新格式没有数据）
+    const bestScore = localStorage.getItem('record_mouse');
+    if (bestScore) {
+      this.updateBestScoreDisplay(parseFloat(bestScore));
+    }
+  }
+
   // 显示历史记录
   showHistory() {
     if (window.historyModal) {
@@ -134,11 +159,22 @@ class MouseTrackGame {
         timeSpent: 0 // 鼠标轨迹游戏没有时间限制
       };
       
+      // 记录游戏成绩到新格式
       window.gameHistoryManager.recordGameScore(
         'mouse',
         'default',
         scoreData
       );
+      
+      // 不再写入旧格式，统一使用新格式
+      // 检查是否是最佳成绩并更新显示
+      if (window.gameHistoryManager) {
+        const currentBest = window.gameHistoryManager.getGameBestScore('mouse', 'default');
+        if (currentBest === null || parseFloat(score) > currentBest) {
+          // 更新最佳成绩显示
+          updateBestScoreDisplay(parseFloat(score));
+        }
+      }
     }
   }
 
@@ -177,6 +213,8 @@ class MouseTrackGame {
     this.bindEvents();
     // 生成路线
     this.reset();
+    // 加载最佳成绩
+    this.loadBestScore();
   }
 
   reset() {

@@ -290,20 +290,41 @@ class GameHistoryManager {
       this.historyCache.clear();
       this.bestScoreCache.clear();
 
-      // 清理其他可能存在的旧数据
+      // 彻底清理所有游戏相关的localStorage数据
       const allKeys = Object.keys(localStorage);
       const gameRelatedKeys = allKeys.filter(key => 
         key.startsWith('gameHistory_') || 
         key.startsWith('bestScores_') ||
         key.startsWith('record_') ||
-        key === 'gameStats'
+        key === 'gameStats' ||
+        key.includes('puzzle') ||
+        key.includes('stopwatch') ||
+        key.includes('mouse') ||
+        key.includes('reaction')
       );
       
       gameRelatedKeys.forEach(key => {
         localStorage.removeItem(key);
       });
 
-      console.log('✅ 所有游戏数据已重置');
+      // 强制清理可能遗漏的数据
+      const remainingKeys = Object.keys(localStorage);
+      const remainingGameKeys = remainingKeys.filter(key => 
+        key.includes('game') || 
+        key.includes('puzzle') || 
+        key.includes('stopwatch') || 
+        key.includes('mouse') || 
+        key.includes('reaction') ||
+        key.includes('best') ||
+        key.includes('history')
+      );
+      
+      if (remainingGameKeys.length > 0) {
+        remainingGameKeys.forEach(key => {
+          localStorage.removeItem(key);
+        });
+      }
+
       return true;
     } catch (error) {
       console.error('❌ 重置游戏数据失败:', error);
@@ -375,6 +396,72 @@ class GameHistoryManager {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  // 获取游戏最佳成绩（替代旧格式的record_*）
+  getGameBestScore(gameType, difficulty = 'default') {
+    try {
+      const bestKey = `bestScores_${gameType}_${difficulty}`;
+      const bestScores = JSON.parse(localStorage.getItem(bestKey) || '[]');
+      
+      if (bestScores.length > 0) {
+        // 返回最佳成绩（第一个，因为已经按成绩排序）
+        return bestScores[0].score;
+      }
+      return null;
+    } catch (error) {
+      console.error(`获取${gameType}最佳成绩失败:`, error);
+      return null;
+    }
+  }
+
+  // 获取游戏最佳成绩（兼容旧格式，优先返回新格式数据）
+  getGameBestScoreCompatible(gameType, difficulty = 'default') {
+    // 优先从新格式获取
+    const newBest = this.getGameBestScore(gameType, difficulty);
+    if (newBest !== null) {
+      return newBest;
+    }
+    
+    // 如果新格式没有数据，尝试从旧格式获取（兼容性）
+    try {
+      const oldBest = localStorage.getItem(`record_${gameType}`);
+      if (oldBest) {
+        // 将旧格式数据迁移到新格式
+        this.migrateOldRecord(gameType, difficulty, oldBest);
+        return parseFloat(oldBest);
+      }
+    } catch (error) {
+      console.error(`获取旧格式${gameType}最佳成绩失败:`, error);
+    }
+    
+    return null;
+  }
+
+  // 迁移旧格式记录到新格式
+  migrateOldRecord(gameType, difficulty, oldScore) {
+    try {
+      const record = {
+        id: this.generateId(),
+        gameType,
+        difficulty,
+        score: parseFloat(oldScore),
+        date: new Date().toISOString(),
+        timeSpent: 0,
+        moves: 0
+      };
+      
+      // 保存到新格式
+      this.saveGameRecord(gameType, difficulty, record);
+      this.updateBestScores(gameType, difficulty, record);
+      
+      // 删除旧格式数据
+      localStorage.removeItem(`record_${gameType}`);
+      
+      console.log(`✅ 已迁移${gameType}的旧格式记录到新格式`);
+    } catch (error) {
+      console.error(`迁移${gameType}旧格式记录失败:`, error);
+    }
   }
 }
 

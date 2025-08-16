@@ -1,4 +1,32 @@
 // 3秒挑战主逻辑
+
+// 更新最佳成绩显示
+function updateBestScoreDisplay(score) {
+  const bestElement = document.getElementById('stopwatch-best');
+  if (bestElement) {
+    const displayText = score < 1000 ? `${score}ms` : `${(score / 1000).toFixed(3)}秒`;
+    bestElement.textContent = `最佳成绩：${displayText}`;
+  }
+}
+
+// 加载最佳成绩
+function loadBestScore() {
+  // 优先从新格式获取最佳成绩
+  if (window.gameHistoryManager) {
+    const bestScore = window.gameHistoryManager.getGameBestScoreCompatible('stopwatch', 'default');
+    if (bestScore !== null) {
+      updateBestScoreDisplay(bestScore);
+      return;
+    }
+  }
+  
+  // 兼容旧格式（如果新格式没有数据）
+  const bestScore = localStorage.getItem('record_stopwatch');
+  if (bestScore) {
+    updateBestScoreDisplay(parseFloat(bestScore));
+  }
+}
+
 function renderStopwatchView() {
   const el = document.getElementById('stopwatch-view');
   const desc = document.getElementById('stopwatch-desc');
@@ -45,19 +73,31 @@ function renderStopwatchView() {
   // 记录游戏成绩
   function recordGameScore(diff) {
     if (window.gameHistoryManager) {
+      // 将误差值转换为毫秒级单位（保留3位小数）
+      const diffMs = Math.round(diff * 1000);
+      
       const scoreData = {
-        score: diff, // 误差作为成绩（越小越好）
+        score: diffMs, // 误差作为成绩（毫秒，越小越好）
         moves: 0,
         timeSpent: timer * 1000 // 转换为毫秒
       };
       
+      // 记录游戏成绩到新格式
       window.gameHistoryManager.recordGameScore(
         'stopwatch',
         'default',
         scoreData
       );
       
-
+      // 不再写入旧格式，统一使用新格式
+      // 检查是否是最佳成绩并更新显示
+      if (window.gameHistoryManager) {
+        const currentBest = window.gameHistoryManager.getGameBestScore('stopwatch', 'default');
+        if (currentBest === null || diffMs < currentBest) {
+          // 更新最佳成绩显示
+          updateBestScoreDisplay(diffMs);
+        }
+      }
     }
   }
 
@@ -91,7 +131,9 @@ function renderStopwatchView() {
     `;
     
     const historyList = history.slice(0, 10).map(record => {
-      return `<tr><td>${record.score.toFixed(3)}秒</td><td>${(record.timeSpent / 1000).toFixed(3)}秒</td><td>${new Date(record.date).toLocaleDateString()}</td></tr>`;
+      // 将毫秒转换为合适的显示格式
+      const errorDisplay = record.score < 1000 ? `${record.score}ms` : `${(record.score / 1000).toFixed(3)}秒`;
+      return `<tr><td>${errorDisplay}</td><td>${(record.timeSpent / 1000).toFixed(3)}秒</td><td>${new Date(record.date).toLocaleDateString()}</td></tr>`;
     }).join('');
     
     dialog.innerHTML = `
@@ -111,15 +153,15 @@ function renderStopwatchView() {
         
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px;">
           <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;">
-            <div style="font-size: 1.5em; font-weight: bold;">${stats.bestScore ? stats.bestScore.toFixed(3) : '--'}</div>
+            <div style="font-size: 1.5em; font-weight: bold;">${stats.bestScore ? (stats.bestScore < 1000 ? `${stats.bestScore}ms` : `${(stats.bestScore / 1000).toFixed(3)}秒`) : '--'}</div>
             <div style="font-size: 0.9em; opacity: 0.8;">最佳误差</div>
           </div>
           <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;">
-            <div style="font-size: 1.5em; font-weight: bold;">${stats.recent5Avg ? stats.recent5Avg.toFixed(3) : '--'}</div>
+            <div style="font-size: 1.5em; font-weight: bold;">${stats.recent5Avg ? (stats.recent5Avg < 1000 ? `${stats.recent5Avg}ms` : `${(stats.recent5Avg / 1000).toFixed(3)}秒`) : '--'}</div>
             <div style="font-size: 0.9em; opacity: 0.8;">近五次平均误差</div>
           </div>
           <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;">
-            <div style="font-size: 1.5em; font-weight: bold;">${stats.recent10Avg ? stats.recent10Avg.toFixed(3) : '--'}</div>
+            <div style="font-size: 1.5em; font-weight: bold;">${stats.recent10Avg ? (stats.recent10Avg < 1000 ? `${stats.recent10Avg}ms` : `${(stats.recent10Avg / 1000).toFixed(3)}秒`) : '--'}</div>
             <div style="font-size: 0.9em; opacity: 0.8;">近十次平均误差</div>
           </div>
         </div>
@@ -198,6 +240,17 @@ function renderStopwatchView() {
     localStorage.setItem(getBestKey(), val);
   }
   function renderBest() {
+    // 优先从新格式获取最佳成绩
+    if (window.gameHistoryManager) {
+      const bestScore = window.gameHistoryManager.getGameBestScoreCompatible('stopwatch', 'default');
+      if (bestScore !== null) {
+        const displayText = bestScore < 1000 ? `${bestScore}ms` : `${(bestScore / 1000).toFixed(3)}秒`;
+        bestEl.innerHTML = `最佳成绩<br><span style='font-size:1.5em;color:#1b5e20;'>${displayText}</span>`;
+        return;
+      }
+    }
+    
+    // 兼容旧格式（如果新格式没有数据）
     const best = getBest();
     if (best !== null) {
       bestEl.innerHTML = `最佳成绩<br><span style='font-size:1.5em;color:#1b5e20;'>${best.toFixed(3)}</span> 秒`;
@@ -269,4 +322,8 @@ function renderStopwatchView() {
   targetSel.onchange = reset;
   modeSel.onchange = reset;
 }
-window.addEventListener('DOMContentLoaded', renderStopwatchView); 
+window.addEventListener('DOMContentLoaded', () => {
+  renderStopwatchView();
+  // 加载最佳成绩
+  loadBestScore();
+}); 

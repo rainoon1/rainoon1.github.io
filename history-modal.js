@@ -299,8 +299,24 @@ class HistoryModal {
         const success = window.gameHistoryManager.resetAllGames();
         if (success) {
           alert('✅ 所有游戏的历史记录已清理！');
+          
+          // 更新当前弹窗的统计
           this.loadHistory();
           this.updateStats();
+          
+          // 更新首页统计（如果主页面存在）
+          if (window.updateStats) {
+            window.updateStats();
+          }
+          if (window.updateDailyStats) {
+            window.updateDailyStats();
+          }
+          if (window.updateStatProgress) {
+            window.updateStatProgress();
+          }
+          if (window.loadBestScores) {
+            window.loadBestScores();
+          }
         } else {
           alert('❌ 清理失败，请重试');
         }
@@ -353,9 +369,14 @@ class HistoryModal {
   formatScore(score) {
     if (score === null || score === undefined) return null;
     
-    // 反应测试游戏：显示为整数毫秒
+    // 3秒挑战游戏：显示为毫秒
+    if (this.currentGameType === 'stopwatch') {
+      return Math.round(score) + 'ms';
+    }
+    
+    // 反应测试游戏：显示为毫秒
     if (this.currentGameType === 'reaction') {
-      return Math.round(score) + ' 毫秒';
+      return Math.round(score) + 'ms';
     }
     
     // 鼠标轨迹游戏：显示为整数分
