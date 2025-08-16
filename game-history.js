@@ -1,30 +1,15 @@
 // 游戏成绩历史管理模块
 class GameHistoryManager {
   constructor() {
-    // 存储限制配置
-    this.STORAGE_LIMITS = {
-      'number_puzzle': {
-        '3x3': 80,
-        '4x4': 100,
-        '5x5': 60
-      },
-      'image_puzzle': {
-        '4x4': 80
-      },
-      'stopwatch': 150,
-      'mouse': 100,
-      'reaction': 120
-    };
+    // 存储限制：每个游戏类型+难度组合最多保存200条记录
+    this.STORAGE_LIMIT = 200;
     
-    // 分页配置
-    this.PAGINATION_CONFIG = {
-      pageSize: 20,
-      maxVisiblePages: 5,
-      preloadPages: 2
-    };
+    // 最佳成绩存储：每个游戏类型+难度组合单独存储最佳成绩
+    this.BEST_SCORE_LIMIT = 10; // 保留前10个最佳成绩
     
     // 内存缓存
     this.historyCache = new Map();
+    this.bestScoreCache = new Map();
     
     this.init();
   }
@@ -44,19 +29,14 @@ class GameHistoryManager {
       moves: scoreData.moves || 0,
       timeSpent: scoreData.timeSpent || 0,
       date: new Date().toISOString(),
-      completed: scoreData.completed !== false,
-      bestScore: false,
       ...scoreData
     };
     
-    // 检查是否破纪录
-    const bestScore = this.getBestScore(gameType, difficulty);
-    if (bestScore === null || record.score < bestScore) {
-      record.bestScore = true;
-    }
-    
     // 保存记录
     this.saveGameRecord(gameType, difficulty, record);
+    
+    // 更新最佳成绩
+    this.updateBestScores(gameType, difficulty, record);
     
     // 清理缓存
     this.clearCache(gameType, difficulty);
@@ -69,14 +49,39 @@ class GameHistoryManager {
     const key = `gameHistory_${gameType}_${difficulty}`;
     const history = this.getGameHistory(gameType, difficulty);
     
-    // 添加新记录
+    // 添加新记录到开头
     history.unshift(record);
     
-    // 清理超限数据
-    this.cleanGameHistory(gameType, difficulty);
+    // 清理超限数据，只保留最近200条
+    if (history.length > this.STORAGE_LIMIT) {
+      history.splice(this.STORAGE_LIMIT);
+    }
     
     // 保存到localStorage
     localStorage.setItem(key, JSON.stringify(history));
+  }
+  
+  // 更新最佳成绩
+  updateBestScores(gameType, difficulty, record) {
+    const bestKey = `bestScores_${gameType}_${difficulty}`;
+    let bestScores = JSON.parse(localStorage.getItem(bestKey) || '[]');
+    
+    // 添加新记录到最佳成绩列表
+    bestScores.push(record);
+    
+    // 按成绩排序（分数越低越好）
+    bestScores.sort((a, b) => a.score - b.score);
+    
+    // 只保留前10个最佳成绩
+    if (bestScores.length > this.BEST_SCORE_LIMIT) {
+      bestScores = bestScores.slice(0, this.BEST_SCORE_LIMIT);
+    }
+    
+    // 保存最佳成绩
+    localStorage.setItem(bestKey, JSON.stringify(bestScores));
+    
+    // 清理缓存
+    this.bestScoreCache.delete(`${gameType}_${difficulty}`);
   }
   
   // 获取游戏历史记录
@@ -93,184 +98,139 @@ class GameHistoryManager {
     // 更新缓存
     this.historyCache.set(key, {
       data: history,
-      timestamp: Date.now(),
-      filtered: null
+      timestamp: Date.now()
     });
     
     return history;
   }
   
-  // 获取分页历史记录
-  getHistoryPage(gameType, difficulty, page = 1, filters = {}) {
-    let history = this.getGameHistory(gameType, difficulty);
+  // 获取最佳成绩（永远保留，不清缓存）
+  getBestScore(gameType, difficulty) {
+    const bestKey = `bestScores_${gameType}_${difficulty}`;
+    const cached = this.bestScoreCache.get(`${gameType}_${difficulty}`);
     
-    // 应用筛选
-    if (filters.completed !== undefined) {
-      history = history.filter(record => record.completed === filters.completed);
+    if (cached) {
+      return cached;
     }
     
-    if (filters.dateRange) {
-      const { start, end } = filters.dateRange;
-      history = history.filter(record => {
-        const recordDate = new Date(record.date);
-        return (!start || recordDate >= start) && (!end || recordDate <= end);
-      });
-    }
+    const bestScores = JSON.parse(localStorage.getItem(bestKey) || '[]');
+    const bestScore = bestScores.length > 0 ? bestScores[0].score : null;
     
-    if (filters.scoreRange) {
-      const { min, max } = filters.scoreRange;
-      history = history.filter(record => {
-        return (!min || record.score >= min) && (!max || record.score <= max);
-      });
-    }
+    // 缓存最佳成绩（不设置过期时间，永远保留）
+    this.bestScoreCache.set(`${gameType}_${difficulty}`, bestScore);
     
-    // 排序
-    const sortBy = filters.sortBy || 'date';
-    const sortOrder = filters.sortOrder || 'desc';
-    
-    history.sort((a, b) => {
-      let aVal, bVal;
-      
-      switch (sortBy) {
-        case 'score':
-          aVal = a.score;
-          bVal = b.score;
-          break;
-        case 'moves':
-          aVal = a.moves;
-          bVal = b.moves;
-          break;
-        case 'timeSpent':
-          aVal = a.timeSpent;
-          bVal = b.timeSpent;
-          break;
-        case 'date':
-        default:
-          aVal = new Date(a.date);
-          bVal = new Date(b.date);
-          break;
-      }
-      
-      if (sortOrder === 'asc') {
-        return aVal > bVal ? 1 : -1;
-      } else {
-        return aVal < bVal ? 1 : -1;
-      }
-    });
-    
-    // 分页
-    const startIndex = (page - 1) * this.PAGINATION_CONFIG.pageSize;
-    const endIndex = startIndex + this.PAGINATION_CONFIG.pageSize;
-    
-    return {
-      records: history.slice(startIndex, endIndex),
-      total: history.length,
-      currentPage: page,
-      totalPages: Math.ceil(history.length / this.PAGINATION_CONFIG.pageSize),
-      hasNext: page < Math.ceil(history.length / this.PAGINATION_CONFIG.pageSize),
-      hasPrev: page > 1
-    };
+    return bestScore;
   }
   
-  // 获取最佳成绩
-  getBestScore(gameType, difficulty) {
-    const history = this.getGameHistory(gameType, difficulty);
-    const completedRecords = history.filter(record => record.completed);
-    
-    if (completedRecords.length === 0) return null;
-    
-    return Math.min(...completedRecords.map(record => record.score));
+  // 获取最佳成绩记录（包含详细信息）
+  getBestScoreRecord(gameType, difficulty) {
+    const bestKey = `bestScores_${gameType}_${difficulty}`;
+    const bestScores = JSON.parse(localStorage.getItem(bestKey) || '[]');
+    return bestScores.length > 0 ? bestScores[0] : null;
   }
   
   // 获取统计信息
   getGameStats(gameType, difficulty) {
     const history = this.getGameHistory(gameType, difficulty);
-    const completedRecords = history.filter(record => record.completed);
     
-    if (completedRecords.length === 0) {
+    if (history.length === 0) {
       return {
-        totalGames: 0,
-        completedGames: 0,
         bestScore: null,
-        averageScore: null,
-        worstScore: null,
-        totalTime: 0,
-        averageTime: null,
-        totalMoves: 0,
-        averageMoves: null
+        recent5Avg: null,
+        recent10Avg: null,
+        totalGames: 0
       };
     }
     
-    const scores = completedRecords.map(record => record.score);
-    const times = completedRecords.map(record => record.timeSpent);
-    const moves = completedRecords.map(record => record.moves);
+    const scores = history.map(record => record.score);
+    
+    // 计算近五次平均（如果记录少于5条，则用所有记录）
+    const recent5Scores = scores.slice(0, Math.min(5, scores.length));
+    const recent5Avg = Math.round(recent5Scores.reduce((a, b) => a + b, 0) / recent5Scores.length);
+    
+    // 计算近十次平均（如果记录少于10条，则用所有记录）
+    const recent10Scores = scores.slice(0, Math.min(10, scores.length));
+    const recent10Avg = Math.round(recent10Scores.reduce((a, b) => a + b, 0) / recent10Scores.length);
     
     return {
-      totalGames: history.length,
-      completedGames: completedRecords.length,
-      bestScore: Math.min(...scores),
-      averageScore: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
-      worstScore: Math.max(...scores),
-      totalTime: times.reduce((a, b) => a + b, 0),
-      averageTime: Math.round(times.reduce((a, b) => a + b, 0) / times.length),
-      totalMoves: moves.reduce((a, b) => a + b, 0),
-      averageMoves: Math.round(moves.reduce((a, b) => a + b, 0) / moves.length)
+      bestScore: this.getBestScore(gameType, difficulty),
+      recent5Avg: recent5Avg,
+      recent10Avg: recent10Avg,
+      totalGames: history.length
     };
+  }
+  
+  // 获取分页历史记录
+  getHistoryPage(gameType, difficulty, page = 1, pageSize = 20) {
+    const history = this.getGameHistory(gameType, difficulty);
+    const totalPages = Math.ceil(history.length / pageSize);
+    
+    if (page < 1) page = 1;
+    if (page > totalPages) page = totalPages;
+    
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    
+    return {
+      records: history.slice(startIndex, endIndex),
+      total: history.length,
+      currentPage: page,
+      totalPages: totalPages,
+      hasNext: page < totalPages,
+      hasPrev: page > 1,
+      pageSize: pageSize
+    };
+  }
+  
+  // 获取所有难度的最佳成绩
+  getAllDifficultiesBestScores(gameType) {
+    const difficulties = this.getDifficultiesForGame(gameType);
+    const result = {};
+    
+    difficulties.forEach(difficulty => {
+      result[difficulty] = this.getBestScore(gameType, difficulty);
+    });
+    
+    return result;
+  }
+  
+  // 获取游戏支持的所有难度
+  getDifficultiesForGame(gameType) {
+    const difficulties = {
+      'number_puzzle': ['3x3', '4x4', '5x5'],
+      'image_puzzle': ['4x4', '6x6', '8x8'],
+      'stopwatch': ['default'],
+      'mouse': ['default'],
+      'reaction': ['default']
+    };
+    
+    return difficulties[gameType] || ['default'];
   }
   
   // 清理游戏历史
   cleanGameHistory(gameType, difficulty) {
-    const limit = this.getStorageLimit(gameType, difficulty);
     const key = `gameHistory_${gameType}_${difficulty}`;
     const history = JSON.parse(localStorage.getItem(key) || '[]');
     
-    if (history.length <= limit) return;
+    if (history.length <= this.STORAGE_LIMIT) return;
     
-    // 保留最佳成绩和最近成绩
-    const bestScores = history
-      .filter(record => record.completed)
-      .sort((a, b) => a.score - b.score)
-      .slice(0, Math.floor(limit * 0.3)); // 保留30%的最佳成绩
-    
-    const recentScores = history
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
-      .slice(0, Math.floor(limit * 0.7)); // 保留70%的最近成绩
-    
-    // 合并并去重
-    const merged = [...bestScores, ...recentScores];
-    const unique = merged.filter((record, index, self) => 
-      index === self.findIndex(r => r.id === record.id)
-    );
-    
-    // 如果还是超限，按时间删除最旧的
-    if (unique.length > limit) {
-      unique.sort((a, b) => new Date(b.date) - new Date(a.date));
-      unique.splice(limit);
-    }
-    
-    localStorage.setItem(key, JSON.stringify(unique));
+    // 只保留最近200条记录
+    const recentHistory = history.slice(0, this.STORAGE_LIMIT);
+    localStorage.setItem(key, JSON.stringify(recentHistory));
   }
   
   // 清理所有历史数据
   cleanAllHistories() {
-    Object.keys(this.STORAGE_LIMITS).forEach(gameType => {
-      if (typeof this.STORAGE_LIMITS[gameType] === 'object') {
-        Object.keys(this.STORAGE_LIMITS[gameType]).forEach(difficulty => {
-          this.cleanGameHistory(gameType, difficulty);
-        });
-      } else {
-        this.cleanGameHistory(gameType, 'default');
+    // 获取所有游戏历史相关的localStorage键
+    const keys = Object.keys(localStorage).filter(key => key.startsWith('gameHistory_'));
+    
+    keys.forEach(key => {
+      const history = JSON.parse(localStorage.getItem(key) || '[]');
+      if (history.length > this.STORAGE_LIMIT) {
+        const recentHistory = history.slice(0, this.STORAGE_LIMIT);
+        localStorage.setItem(key, JSON.stringify(recentHistory));
       }
     });
-  }
-  
-  // 获取存储限制
-  getStorageLimit(gameType, difficulty) {
-    const limits = this.STORAGE_LIMITS[gameType];
-    if (typeof limits === 'object') {
-      return limits[difficulty] || limits[Object.keys(limits)[0]];
-    }
-    return limits;
   }
   
   // 清除缓存
@@ -282,45 +242,6 @@ class GameHistoryManager {
   // 生成唯一ID
   generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
-  }
-  
-  // 导出数据
-  exportHistory(gameType, difficulty) {
-    const history = this.getGameHistory(gameType, difficulty);
-    const csv = this.convertToCSV(history);
-    
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    
-    link.setAttribute('href', url);
-    link.setAttribute('download', `${gameType}_${difficulty}_history.csv`);
-    link.style.visibility = 'hidden';
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
-  
-  // 转换为CSV格式
-  convertToCSV(data) {
-    if (data.length === 0) return '';
-    
-    const headers = Object.keys(data[0]);
-    const csvRows = [headers.join(',')];
-    
-    for (const row of data) {
-      const values = headers.map(header => {
-        const value = row[header];
-        if (typeof value === 'string' && value.includes(',')) {
-          return `"${value}"`;
-        }
-        return value;
-      });
-      csvRows.push(values.join(','));
-    }
-    
-    return csvRows.join('\n');
   }
   
   // 删除记录
@@ -339,6 +260,121 @@ class GameHistoryManager {
     const key = `gameHistory_${gameType}_${difficulty}`;
     localStorage.removeItem(key);
     this.clearCache(gameType, difficulty);
+  }
+  
+  // 清空最佳成绩（谨慎使用）
+  clearBestScores(gameType, difficulty) {
+    const bestKey = `bestScores_${gameType}_${difficulty}`;
+    localStorage.removeItem(bestKey);
+    this.bestScoreCache.delete(`${gameType}_${difficulty}`);
+  }
+
+  // 全局重置 - 清理所有游戏数据（谨慎使用）
+  resetAllGames() {
+    try {
+      // 获取所有游戏类型
+      const gameTypes = ['number_puzzle', 'image_puzzle', 'stopwatch', 'mouse', 'reaction'];
+      
+      // 清理每个游戏类型的所有数据
+      gameTypes.forEach(gameType => {
+        const difficulties = this.getDifficultiesForGame(gameType);
+        difficulties.forEach(difficulty => {
+          // 清理历史记录
+          this.clearAllHistory(gameType, difficulty);
+          // 清理最佳成绩
+          this.clearBestScores(gameType, difficulty);
+        });
+      });
+
+      // 清理所有缓存
+      this.historyCache.clear();
+      this.bestScoreCache.clear();
+
+      // 清理其他可能存在的旧数据
+      const allKeys = Object.keys(localStorage);
+      const gameRelatedKeys = allKeys.filter(key => 
+        key.startsWith('gameHistory_') || 
+        key.startsWith('bestScores_') ||
+        key.startsWith('record_') ||
+        key === 'gameStats'
+      );
+      
+      gameRelatedKeys.forEach(key => {
+        localStorage.removeItem(key);
+      });
+
+      console.log('✅ 所有游戏数据已重置');
+      return true;
+    } catch (error) {
+      console.error('❌ 重置游戏数据失败:', error);
+      return false;
+    }
+  }
+
+  // 获取存储使用情况
+  getStorageInfo() {
+    try {
+      const allKeys = Object.keys(localStorage);
+      const gameHistoryKeys = allKeys.filter(key => key.startsWith('gameHistory_'));
+      const bestScoreKeys = allKeys.filter(key => key.startsWith('bestScores_'));
+      const recordKeys = allKeys.filter(key => key.startsWith('record_'));
+      
+      let totalSize = 0;
+      let gameHistorySize = 0;
+      let bestScoreSize = 0;
+      let recordSize = 0;
+
+      // 计算各种数据的大小
+      gameHistoryKeys.forEach(key => {
+        const data = localStorage.getItem(key);
+        if (data) {
+          const size = new Blob([data]).size;
+          gameHistorySize += size;
+          totalSize += size;
+        }
+      });
+
+      bestScoreKeys.forEach(key => {
+        const data = localStorage.getItem(key);
+        if (data) {
+          const size = new Blob([data]).size;
+          bestScoreSize += size;
+          totalSize += size;
+        }
+      });
+
+      recordKeys.forEach(key => {
+        const data = localStorage.getItem(key);
+        if (data) {
+          const size = new Blob([data]).size;
+          recordSize += size;
+          totalSize += size;
+        }
+      });
+
+      return {
+        totalSize: this.formatBytes(totalSize),
+        gameHistorySize: this.formatBytes(gameHistorySize),
+        bestScoreSize: this.formatBytes(bestScoreSize),
+        recordSize: this.formatBytes(recordSize),
+        gameHistoryCount: gameHistoryKeys.length,
+        bestScoreCount: bestScoreKeys.length,
+        recordCount: recordKeys.length,
+        totalKeys: allKeys.length
+      };
+    } catch (error) {
+      console.error('获取存储信息失败:', error);
+      return null;
+    }
+  }
+
+  // 格式化字节大小
+  formatBytes(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 }
 

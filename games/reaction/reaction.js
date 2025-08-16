@@ -15,6 +15,129 @@ class ReactionGame {
     this.records = [];
     this.bests = this.loadBests();
     this.render();
+    this.bindHistoryButton();
+  }
+
+  // 绑定历史按钮事件
+  bindHistoryButton() {
+    const historyBtn = document.getElementById('history-btn');
+    if (historyBtn) {
+      historyBtn.addEventListener('click', () => this.showHistory());
+    }
+  }
+
+  // 显示历史记录
+  showHistory() {
+    if (window.historyModal) {
+      window.historyModal.show('reaction', 'default');
+    } else {
+      this.showSimpleHistory();
+    }
+  }
+
+  // 简单历史记录显示（备用方案）
+  showSimpleHistory() {
+    if (!window.gameHistoryManager) return;
+    
+    const history = window.gameHistoryManager.getGameHistory('reaction', 'default');
+    const stats = window.gameHistoryManager.getGameStats('reaction', 'default');
+    
+    const dialog = document.createElement('div');
+    dialog.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+    `;
+    
+    const historyList = history.slice(0, 10).map(record => {
+      return `<tr><td>${record.score}毫秒</td><td>${new Date(record.date).toLocaleDateString()}</td></tr>`;
+    }).join('');
+    
+    dialog.innerHTML = `
+      <div style="
+        background: linear-gradient(135deg, #f57c00, #ff9800);
+        border-radius: 20px;
+        padding: 30px;
+        max-width: 90vw;
+        max-height: 80vh;
+        overflow-y: auto;
+        color: white;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      ">
+        <h2 style="margin: 0 0 20px 0; font-size: 1.8em;">反应测试成绩历史</h2>
+        
+        <div style="margin-bottom: 20px; display: flex; justify-content: space-around; gap: 20px;">
+          <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 15px; min-width: 120px;">
+            <div style="font-size: 1.5em; font-weight: bold;">${stats.bestScore || '--'}</div>
+            <div>最佳成绩</div>
+          </div>
+          <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 15px; min-width: 120px;">
+            <div style="font-size: 1.5em; font-weight: bold;">${stats.recent5Avg || '--'}</div>
+            <div>近五次平均</div>
+          </div>
+          <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 15px; min-width: 120px;">
+            <div style="font-size: 1.5em; font-weight: bold;">${stats.totalGames}</div>
+            <div>总游戏次数</div>
+          </div>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+          <h3 style="margin: 0 0 15px 0;">最近10次成绩</h3>
+          <table style="width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
+            <thead>
+              <tr style="background: rgba(255,255,255,0.2);">
+                <th style="padding: 12px; text-align: center;">成绩</th>
+                <th style="padding: 12px; text-align: center;">日期</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${historyList || '<tr><td colspan="2" style="text-align: center; padding: 20px;">暂无记录</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+        
+        <button class="button" onclick="this.parentElement.parentElement.remove()" style="
+          background: rgba(255,255,255,0.2);
+          border: 2px solid white;
+          color: white;
+          padding: 12px 30px;
+          border-radius: 25px;
+          font-size: 1.1em;
+          cursor: pointer;
+          transition: all 0.3s;
+        ">关闭</button>
+      </div>
+    `;
+    
+    document.body.appendChild(dialog);
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) dialog.remove();
+    });
+  }
+
+  // 记录游戏成绩
+  recordGameScore(reactionTime) {
+    if (window.gameHistoryManager) {
+      const scoreData = {
+        score: reactionTime, // 反应时间作为成绩（越小越好）
+        moves: 0,
+        timeSpent: 0
+      };
+      
+      window.gameHistoryManager.recordGameScore(
+        'reaction',
+        'default',
+        scoreData
+      );
+    }
   }
 
   // 加载最佳成绩
@@ -398,6 +521,8 @@ class ReactionGame {
         this.showResultDialog('测试结果', `你的反应时间：<b>${reaction.toFixed(0)}</b> 毫秒<br><span style='color:#1b5e20;font-size:1.1em;'>${comment}</span>`);
         this.updateBest(reaction);
         this.renderBest();
+        // 保存成绩到历史记录
+        this.recordGameScore(reaction);
       } else {
         this.records.push(reaction);
         this.round++;
@@ -405,6 +530,8 @@ class ReactionGame {
         this.updateBest(reaction);
         this.renderBest();
         this.renderProgress();
+        // 保存成绩到历史记录
+        this.recordGameScore(reaction);
         if (this.round < this.mode) {
           setTimeout(() => {
             this.startWait();

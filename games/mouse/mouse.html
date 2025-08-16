@@ -5,16 +5,41 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>鼠标轨迹 - 摸鱼游戏小站</title>
   <link rel="stylesheet" href="../../style.css">
-  <style>body { background: #e8f5e9; }</style>
+  <style>
+    body { background: #e3f2fd; }
+    .game-header { text-align: center; margin: 20px 0; }
+    .game-header h2 { color: #1976d2; margin-bottom: 10px; }
+    .history-btn { 
+      background: rgba(25, 118, 210, 0.8); 
+      color: white; 
+      border: none; 
+      padding: 8px 16px; 
+      border-radius: 20px; 
+      cursor: pointer; 
+      margin: 10px; 
+      font-size: 14px;
+    }
+    .history-btn:hover { background: rgba(25, 118, 210, 1); }
+  </style>
 </head>
 <body>
   <canvas id="gravity-bg" style="position:fixed;z-index:-1;top:0;left:0;width:100vw;height:100vh;"></canvas>
-  <div style="text-align:center;margin:32px 0;">
+  
+  <div class="game-header">
     <a href="../../index.html" class="button">返回大厅</a>
-    <h2 style="margin:16px 0 24px;">鼠标轨迹</h2>
+    <h2>🖱️ 鼠标轨迹</h2>
+    <p style="color: #1976d2; margin-bottom: 15px;">用鼠标沿着轨迹线移动，挑战你的手眼协调能力！</p>
+    <button id="history-btn" class="history-btn">📈 成绩历史</button>
   </div>
+  
   <div id="mouse-view"></div>
+  
+
+
   <script src="../../gravity-balls.js"></script>
+  <script src="../../game-history.js"></script>
+  <script src="../../history-modal.js"></script>
+  <link rel="stylesheet" href="../../history-modal.css">
   <script src="mouse.js"></script>
 </body>
 </html> 

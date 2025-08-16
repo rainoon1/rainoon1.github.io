@@ -9,14 +9,27 @@ class NumberPuzzle {
     this.timer = null;
     this.gameStarted = false;
     this.solved = false;
+
     
     this.init();
   }
 
   init() {
     this.bindEvents();
+
     this.loadBestScore();
     this.updateDisplay();
+  }
+
+
+
+  getDifficultyString() {
+    switch (this.size) {
+      case 3: return '3x3';
+      case 4: return '4x4';
+      case 5: return '5x5';
+      default: return '4x4';
+    }
   }
 
   bindEvents() {
@@ -28,6 +41,8 @@ class NumberPuzzle {
       this.resetGame();
     });
   }
+
+
 
   startGame() {
     this.gameStarted = true;
@@ -190,8 +205,29 @@ class NumberPuzzle {
     // 保存最佳记录
     this.saveBestScore(timeElapsed);
     
+    // 记录到历史系统
+    this.recordGameScore(timeElapsed);
+    
+    
+    
     // 显示胜利对话框
     this.showWinDialog(timeElapsed);
+  }
+
+  recordGameScore(timeElapsed) {
+    if (window.gameHistoryManager) {
+      const scoreData = {
+        score: timeElapsed, // 用时作为成绩（越短越好）
+        moves: this.moves,
+        timeSpent: timeElapsed * 1000 // 转换为毫秒
+      };
+      
+      window.gameHistoryManager.recordGameScore(
+        'number_puzzle',
+        this.getDifficultyString(),
+        scoreData
+      );
+    }
   }
 
   showWinDialog(timeElapsed) {
@@ -325,6 +361,110 @@ class NumberPuzzle {
         window.recordGamePlay('number_puzzle', timeElapsed);
       }
     }
+  }
+
+  showHistory() {
+    if (window.historyModal) {
+      window.historyModal.show('number_puzzle', this.getDifficultyString());
+    } else {
+      // 如果没有历史弹窗，显示简单的历史记录
+      this.showSimpleHistory();
+    }
+  }
+
+  showSimpleHistory() {
+    if (!window.gameHistoryManager) return;
+    
+    const history = window.gameHistoryManager.getGameHistory('number_puzzle', this.getDifficultyString());
+    const stats = window.gameHistoryManager.getGameStats('number_puzzle', this.getDifficultyString());
+    
+    const dialog = document.createElement('div');
+    dialog.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+    `;
+    
+    const historyList = history.slice(0, 10).map(record => {
+      const minutes = Math.floor(record.timeSpent / 60000);
+      const seconds = Math.floor((record.timeSpent % 60000) / 1000);
+      const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      return `<tr><td>${timeString}</td><td>${record.moves}</td><td>${new Date(record.date).toLocaleDateString()}</td></tr>`;
+    }).join('');
+    
+    dialog.innerHTML = `
+      <div style="
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 20px;
+        padding: 40px;
+        text-align: center;
+        color: white;
+        max-width: 600px;
+        margin: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        max-height: 80vh;
+        overflow-y: auto;
+      ">
+        <h2 style="margin-bottom: 20px;">${this.size}×${this.size} 历史记录</h2>
+        
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px;">
+          <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;">
+            <div style="font-size: 1.5em; font-weight: bold;">${stats.bestScore ? Math.floor(stats.bestScore / 60) + ':' + (stats.bestScore % 60).toString().padStart(2, '0') : '--'}</div>
+            <div style="font-size: 0.9em; opacity: 0.8;">最佳成绩</div>
+          </div>
+          <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;">
+            <div style="font-size: 1.5em; font-weight: bold;">${stats.recent5Avg ? Math.floor(stats.recent5Avg / 60) + ':' + (stats.recent5Avg % 60).toString().padStart(2, '0') : '--'}</div>
+            <div style="font-size: 0.9em; opacity: 0.8;">近五次平均</div>
+          </div>
+          <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;">
+            <div style="font-size: 1.5em; font-weight: bold;">${stats.recent10Avg ? Math.floor(stats.recent10Avg / 60) + ':' + (stats.recent10Avg % 60).toString().padStart(2, '0') : '--'}</div>
+            <div style="font-size: 0.9em; opacity: 0.8;">近十次平均</div>
+          </div>
+        </div>
+        
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+          <thead>
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.3);">
+              <th style="padding: 10px; text-align: left;">用时</th>
+              <th style="padding: 10px; text-align: left;">步数</th>
+              <th style="padding: 10px; text-align: left;">日期</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${historyList}
+          </tbody>
+        </table>
+        
+        <button id="close-history" style="
+          background: rgba(255, 255, 255, 0.2);
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          color: white;
+          padding: 12px 24px;
+          border-radius: 25px;
+          cursor: pointer;
+          font-size: 1em;
+        ">关闭</button>
+      </div>
+    `;
+    
+    document.body.appendChild(dialog);
+    
+    document.getElementById('close-history').addEventListener('click', () => {
+      document.body.removeChild(dialog);
+    });
+    
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) {
+        document.body.removeChild(dialog);
+      }
+    });
   }
 }
 
