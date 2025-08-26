@@ -879,7 +879,7 @@ class ImagePuzzle {
   }
 
   loadBestScore() {
-    // 优先从新格式获取最佳成绩
+    // 从新格式获取最佳成绩
     if (window.gameHistoryManager) {
       const bestScore = window.gameHistoryManager.getGameBestScoreCompatible('image_puzzle', this.getDifficultyString());
       if (bestScore !== null) {
@@ -889,15 +889,6 @@ class ImagePuzzle {
         document.getElementById('best-score').textContent = timeString;
         return;
       }
-    }
-    
-    // 兼容旧格式（如果新格式没有数据）
-    const bestScore = localStorage.getItem('record_image_puzzle');
-    if (bestScore) {
-      const minutes = Math.floor(bestScore / 60);
-      const seconds = bestScore % 60;
-      const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-      document.getElementById('best-score').textContent = timeString;
     }
   }
 
@@ -910,23 +901,12 @@ class ImagePuzzle {
       if (currentBest === null || timeElapsed < currentBest) {
         isNewBest = true;
       }
-    } else {
-      // 兼容旧格式
-      const currentBest = localStorage.getItem('record_image_puzzle');
-      if (!currentBest || timeElapsed < parseInt(currentBest)) {
-        isNewBest = true;
-      }
     }
     
     if (isNewBest) {
       // 更新主站的统计（新格式）
       if (window.recordGamePlay) {
         window.recordGamePlay('image_puzzle', timeElapsed);
-      }
-      
-      // 兼容旧格式（如果新格式不可用）
-      if (!window.gameHistoryManager) {
-        localStorage.setItem('record_image_puzzle', timeElapsed.toString());
       }
       
       this.loadBestScore();

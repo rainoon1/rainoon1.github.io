@@ -109,7 +109,7 @@ function updateStats() {
   games.forEach((game, index) => {
     let score = '--';
     
-    // 优先从 gameHistoryManager 获取新格式成绩
+    // 从 gameHistoryManager 获取成绩
     if (window.gameHistoryManager) {
       try {
         const bestScore = window.gameHistoryManager.getGameBestScoreCompatible(game, 'default');
@@ -121,34 +121,28 @@ function updateStats() {
       }
     }
     
-    // 如果新格式没有数据，尝试从旧格式获取（兼容性）
-    if (score === '--') {
-      const oldScore = localStorage.getItem(`record_${game}`);
-      score = oldScore || '--';
-    }
-    
     // 格式化成绩显示
     if (score !== '--') {
       switch (game) {
         case 'number_puzzle':
-          // 数字拼图显示完成时间
-          score = `${score}秒`;
+          // 数字拼图显示完成时间（只保留秒级）
+          score = `${Math.round(score)}秒`;
           break;
         case 'image_puzzle':
-          // 图片拼图显示完成时间
-          score = `${score}秒`;
+          // 图片拼图显示完成时间（只保留秒级）
+          score = `${Math.round(score)}秒`;
           break;
         case 'stopwatch':
           // 3秒挑战显示误差值（毫秒级）
-          score = `${score}ms`;
+          score = `${Math.round(score)}ms`;
           break;
         case 'mouse':
           // 鼠标轨迹显示完成度
           score = `${score}%`;
           break;
         case 'reaction':
-          // 反应测试显示反应时间（毫秒级）
-          score = `${score}ms`;
+          // 反应测试显示反应时间（毫秒级，精度到毫秒）
+          score = `${Math.round(score)}ms`;
           break;
       }
     }
@@ -160,10 +154,8 @@ function updateStats() {
         <div class="stat-number">${score}</div>
         <div class="stat-label">${gameNames[index]}</div>
         <div class="stat-mode">${gameModes[index]}</div>
-        <div class="stat-progress">
-          <div class="progress-bar">
-            <div class="progress-fill" style="width: 0%"></div>
-          </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: 0%"></div>
         </div>
       `;
       
@@ -237,20 +229,12 @@ function getBestScore() {
   games.forEach(game => {
     let score = null;
     
-    // 优先从新格式获取成绩
+    // 从新格式获取成绩
     if (window.gameHistoryManager) {
       try {
         score = window.gameHistoryManager.getGameBestScoreCompatible(game, 'default');
       } catch (e) {
         console.log(`无法从 gameHistoryManager 获取 ${game} 的成绩:`, e);
-      }
-    }
-    
-    // 如果新格式没有数据，尝试从旧格式获取（兼容性）
-    if (score === null) {
-      const oldScore = localStorage.getItem(`record_${game}`);
-      if (oldScore && oldScore !== '--') {
-        score = parseFloat(oldScore);
       }
     }
     
@@ -404,7 +388,7 @@ const games = [
 
 function loadBestScores() {
   games.forEach(g => {
-    // 优先从新格式获取最佳成绩
+    // 从新格式获取最佳成绩
     if (window.gameHistoryManager) {
       try {
         const bestScore = window.gameHistoryManager.getGameBestScoreCompatible(g.key, 'default');
@@ -417,8 +401,7 @@ function loadBestScores() {
       }
     }
     
-    // 如果新格式没有数据，尝试从旧格式获取（兼容性）
-    g.best = localStorage.getItem(`record_${g.key}`) || '--';
+    g.best = '--';
   });
 }
 
@@ -451,19 +434,22 @@ function renderGameHall() {
     if (g.best !== '--') {
       switch (g.key) {
         case 'number_puzzle':
-          formattedScore = `${g.best}秒`;
+          // 数字拼图只保留秒级
+          formattedScore = `${Math.round(g.best)}秒`;
           break;
         case 'image_puzzle':
-          formattedScore = `${g.best}秒`;
+          // 图片拼图只保留秒级
+          formattedScore = `${Math.round(g.best)}秒`;
           break;
         case 'stopwatch':
-          formattedScore = `${g.best}ms`;
+          formattedScore = `${Math.round(g.best)}ms`;
           break;
         case 'mouse':
           formattedScore = `${g.best}%`;
           break;
         case 'reaction':
-          formattedScore = `${g.best}ms`;
+          // 反应测试精度到毫秒级
+          formattedScore = `${Math.round(g.best)}ms`;
           break;
       }
     }
@@ -522,7 +508,7 @@ function updateDailyStats() {
   document.getElementById('today-games').textContent = todayStats.gamesPlayed;
   document.getElementById('today-time').textContent = Math.round(todayStats.totalTime / 60);
   
-  // 计算今日最佳成绩
+  // 获取今日最佳成绩
   const games = ['number_puzzle', 'image_puzzle', 'stopwatch', 'mouse', 'reaction'];
   let bestScore = '--';
   let bestGame = '';
@@ -530,20 +516,12 @@ function updateDailyStats() {
   games.forEach(game => {
     let score = null;
     
-    // 优先从新格式获取最佳成绩
+    // 从新格式获取成绩
     if (window.gameHistoryManager) {
       try {
         score = window.gameHistoryManager.getGameBestScoreCompatible(game, 'default');
       } catch (e) {
         console.log(`无法从 gameHistoryManager 获取 ${game} 的成绩:`, e);
-      }
-    }
-    
-    // 如果新格式没有数据，尝试从旧格式获取（兼容性）
-    if (score === null) {
-      const oldScore = localStorage.getItem(`record_${game}`);
-      if (oldScore && oldScore !== '--') {
-        score = parseFloat(oldScore);
       }
     }
     
@@ -569,16 +547,18 @@ function updateDailyStats() {
     switch (bestGame) {
       case 'number_puzzle':
       case 'image_puzzle':
-        formattedScore = `${bestScore}秒`;
+        // 拼图游戏只保留秒级
+        formattedScore = `${Math.round(bestScore)}秒`;
         break;
       case 'stopwatch':
-        formattedScore = `${bestScore}ms`;
+        formattedScore = `${Math.round(bestScore)}ms`;
         break;
       case 'mouse':
         formattedScore = `${bestScore}%`;
         break;
       case 'reaction':
-        formattedScore = `${bestScore}ms`;
+        // 反应测试精度到毫秒级
+        formattedScore = `${Math.round(bestScore)}ms`;
         break;
     }
     
@@ -593,20 +573,12 @@ function updateStatProgress() {
   games.forEach(game => {
     let score = null;
     
-    // 优先从新格式获取最佳成绩
+    // 从新格式获取最佳成绩
     if (window.gameHistoryManager) {
       try {
         score = window.gameHistoryManager.getGameBestScoreCompatible(game, 'default');
       } catch (e) {
         console.log(`无法从 gameHistoryManager 获取 ${game} 的成绩:`, e);
-      }
-    }
-    
-    // 如果新格式没有数据，尝试从旧格式获取（兼容性）
-    if (score === null) {
-      const oldScore = localStorage.getItem(`record_${game}`);
-      if (oldScore && oldScore !== '--') {
-        score = parseFloat(oldScore);
       }
     }
     

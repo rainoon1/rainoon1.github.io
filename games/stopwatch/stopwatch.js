@@ -4,26 +4,21 @@
 function updateBestScoreDisplay(score) {
   const bestElement = document.getElementById('stopwatch-best');
   if (bestElement) {
-    const displayText = score < 1000 ? `${score}ms` : `${(score / 1000).toFixed(3)}秒`;
+    // 拼图游戏只保留秒级，反应测试精度到毫秒级
+    const displayText = score < 1000 ? `${score}ms` : `${Math.round(score / 1000)}秒`;
     bestElement.textContent = `最佳成绩：${displayText}`;
   }
 }
 
 // 加载最佳成绩
 function loadBestScore() {
-  // 优先从新格式获取最佳成绩
+  // 从新格式获取最佳成绩
   if (window.gameHistoryManager) {
     const bestScore = window.gameHistoryManager.getGameBestScoreCompatible('stopwatch', 'default');
     if (bestScore !== null) {
       updateBestScoreDisplay(bestScore);
       return;
     }
-  }
-  
-  // 兼容旧格式（如果新格式没有数据）
-  const bestScore = localStorage.getItem('record_stopwatch');
-  if (bestScore) {
-    updateBestScoreDisplay(parseFloat(bestScore));
   }
 }
 
@@ -73,8 +68,8 @@ function renderStopwatchView() {
   // 记录游戏成绩
   function recordGameScore(diff) {
     if (window.gameHistoryManager) {
-      // 将误差值转换为毫秒级单位（保留3位小数）
-      const diffMs = Math.round(diff * 1000);
+          // 将误差值转换为毫秒级单位（精度到毫秒）
+    const diffMs = Math.round(diff * 1000);
       
       const scoreData = {
         score: diffMs, // 误差作为成绩（毫秒，越小越好）
@@ -132,8 +127,8 @@ function renderStopwatchView() {
     
     const historyList = history.slice(0, 10).map(record => {
       // 将毫秒转换为合适的显示格式
-      const errorDisplay = record.score < 1000 ? `${record.score}ms` : `${(record.score / 1000).toFixed(3)}秒`;
-      return `<tr><td>${errorDisplay}</td><td>${(record.timeSpent / 1000).toFixed(3)}秒</td><td>${new Date(record.date).toLocaleDateString()}</td></tr>`;
+      const errorDisplay = record.score < 1000 ? `${record.score}ms` : `${Math.round(record.score / 1000)}秒`;
+      return `<tr><td>${errorDisplay}</td><td>${Math.round(record.timeSpent / 1000)}秒</td><td>${new Date(record.date).toLocaleDateString()}</td></tr>`;
     }).join('');
     
     dialog.innerHTML = `
@@ -153,15 +148,15 @@ function renderStopwatchView() {
         
         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px;">
           <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;">
-            <div style="font-size: 1.5em; font-weight: bold;">${stats.bestScore ? (stats.bestScore < 1000 ? `${stats.bestScore}ms` : `${(stats.bestScore / 1000).toFixed(3)}秒`) : '--'}</div>
+            <div style="font-size: 1.5em; font-weight: bold;">${stats.bestScore ? (stats.bestScore < 1000 ? `${stats.bestScore}ms` : `${Math.round(stats.bestScore / 1000)}秒`) : '--'}</div>
             <div style="font-size: 0.9em; opacity: 0.8;">最佳误差</div>
           </div>
           <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;">
-            <div style="font-size: 1.5em; font-weight: bold;">${stats.recent5Avg ? (stats.recent5Avg < 1000 ? `${stats.recent5Avg}ms` : `${(stats.recent5Avg / 1000).toFixed(3)}秒`) : '--'}</div>
+            <div style="font-size: 1.5em; font-weight: bold;">${stats.recent5Avg ? (stats.recent5Avg < 1000 ? `${stats.recent5Avg}ms` : `${Math.round(stats.recent5Avg / 1000)}秒`) : '--'}</div>
             <div style="font-size: 0.9em; opacity: 0.8;">近五次平均误差</div>
           </div>
           <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px;">
-            <div style="font-size: 1.5em; font-weight: bold;">${stats.recent10Avg ? (stats.recent10Avg < 1000 ? `${stats.recent10Avg}ms` : `${(stats.recent10Avg / 1000).toFixed(3)}秒`) : '--'}</div>
+            <div style="font-size: 1.5em; font-weight: bold;">${stats.recent10Avg ? (stats.recent10Avg < 1000 ? `${stats.recent10Avg}ms` : `${Math.round(stats.recent10Avg / 1000)}秒`) : '--'}</div>
             <div style="font-size: 0.9em; opacity: 0.8;">近十次平均误差</div>
           </div>
         </div>
@@ -217,7 +212,8 @@ function renderStopwatchView() {
   let bestEl = document.getElementById('stopwatch-best');
 
   function format(t) {
-    return t.toFixed(3);
+    // 拼图游戏只保留秒级，反应测试精度到毫秒级
+    return Math.round(t);
   }
 
   function updateTimer() {
@@ -244,7 +240,7 @@ function renderStopwatchView() {
     if (window.gameHistoryManager) {
       const bestScore = window.gameHistoryManager.getGameBestScoreCompatible('stopwatch', 'default');
       if (bestScore !== null) {
-        const displayText = bestScore < 1000 ? `${bestScore}ms` : `${(bestScore / 1000).toFixed(3)}秒`;
+        const displayText = bestScore < 1000 ? `${bestScore}ms` : `${Math.round(bestScore / 1000)}秒`;
         bestEl.innerHTML = `最佳成绩<br><span style='font-size:1.5em;color:#1b5e20;'>${displayText}</span>`;
         return;
       }
@@ -253,7 +249,7 @@ function renderStopwatchView() {
     // 兼容旧格式（如果新格式没有数据）
     const best = getBest();
     if (best !== null) {
-      bestEl.innerHTML = `最佳成绩<br><span style='font-size:1.5em;color:#1b5e20;'>${best.toFixed(3)}</span> 秒`;
+      bestEl.innerHTML = `最佳成绩<br><span style='font-size:1.5em;color:#1b5e20;'>${Math.round(best)}</span> 秒`;
     } else {
       bestEl.innerHTML = '最佳成绩：--';
     }

@@ -37,19 +37,13 @@ class MouseTrackGame {
 
   // 加载最佳成绩
   loadBestScore() {
-    // 优先从新格式获取最佳成绩
+    // 从新格式获取最佳成绩
     if (window.gameHistoryManager) {
       const bestScore = window.gameHistoryManager.getGameBestScoreCompatible('mouse', 'default');
       if (bestScore !== null) {
         this.updateBestScoreDisplay(bestScore);
         return;
       }
-    }
-    
-    // 兼容旧格式（如果新格式没有数据）
-    const bestScore = localStorage.getItem('record_mouse');
-    if (bestScore) {
-      this.updateBestScoreDisplay(parseFloat(bestScore));
     }
   }
 
