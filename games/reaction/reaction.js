@@ -466,6 +466,12 @@ class ReactionGame {
   showResultDialog(title, html) {
     let dialog = document.getElementById('reaction-result-dialog');
     if (!dialog) {
+      // 获取随机语录
+      let quoteText = "恭喜你完成了测试！";
+      if (window.getRandomQuote) {
+        quoteText = window.getRandomQuote();
+      }
+      
       dialog = document.createElement('div');
       dialog.id = 'reaction-result-dialog';
       dialog.style.position = 'fixed';
@@ -482,6 +488,27 @@ class ReactionGame {
         <div style='background:#fff;padding:18px 16px 14px 16px;border-radius:16px;max-width:96vw;max-height:90vh;box-shadow:0 4px 24px rgba(0,0,0,0.18);position:relative;display:flex;flex-direction:column;align-items:center;'>
           <div style='font-weight:bold;font-size:1.18em;text-align:center;margin-bottom:12px;color:#388e3c;'>${title}</div>
           <div style='margin-bottom:18px;width:100%;text-align:center;font-size:1.15em;'>${html}</div>
+          
+          <!-- 随机语录展示区域 -->
+          <div style="
+            background: #f5f5f5;
+            border-radius: 12px;
+            padding: 16px;
+            margin: 16px 0;
+            border-left: 4px solid #388e3c;
+            max-width: 90%;
+            text-align: left;
+          ">
+            <div style="
+              font-size: 1em;
+              font-style: italic;
+              margin-bottom: 8px;
+              line-height: 1.5;
+              color: #333;
+            ">"${quoteText}"</div>
+            
+          </div>
+          
           <button class='button' id='reaction-result-close' style='margin:0 auto;font-size:1.08em;padding:8px 32px;border-radius:8px;'>关闭</button>
         </div>
       `;
@@ -583,6 +610,9 @@ class ReactionGame {
       }
     }
   }
+
+  // 获取语录类别的显示名称
+
 
   // 等待区逻辑
   startWait() {

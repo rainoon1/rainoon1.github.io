@@ -32,6 +32,9 @@ class NumberPuzzle {
     }
   }
 
+  // 获取语录类别的显示名称
+
+
   bindEvents() {
     document.getElementById('start-game').addEventListener('click', () => this.startGame());
     document.getElementById('reset-game').addEventListener('click', () => this.resetGame());
@@ -235,6 +238,12 @@ class NumberPuzzle {
     const seconds = timeElapsed % 60;
     const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     
+    // 获取随机语录
+          let quoteText = "恭喜你完成了数字拼图！";
+      if (window.getRandomQuote) {
+        quoteText = window.getRandomQuote();
+      }
+    
     const dialog = document.createElement('div');
     dialog.style.cssText = `
       position: fixed;
@@ -256,7 +265,7 @@ class NumberPuzzle {
         padding: 40px;
         text-align: center;
         color: white;
-        max-width: 400px;
+        max-width: 500px;
         margin: 20px;
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
       ">
@@ -267,6 +276,25 @@ class NumberPuzzle {
           <p><strong>步数：</strong>${this.moves}</p>
           <p><strong>难度：</strong>${this.size}×${this.size}</p>
         </div>
+        
+        <!-- 随机语录展示区域 -->
+        <div style="
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 15px;
+          padding: 20px;
+          margin: 20px 0;
+          border-left: 4px solid rgba(255, 255, 255, 0.3);
+        ">
+          <div style="
+            font-size: 1.1em;
+            font-style: italic;
+            margin-bottom: 10px;
+            line-height: 1.6;
+            text-align: left;
+          ">"${quoteText}"</div>
+          
+        </div>
+        
         <div style="display: flex; gap: 15px; justify-content: center;">
           <button id="play-again" style="
             background: rgba(255, 255, 255, 0.2);
