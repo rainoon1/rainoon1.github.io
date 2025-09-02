@@ -94,17 +94,7 @@
             </div>
           </div>
         </div>
-        <div class="stat-card" id="stat-mouse">
-          <div class="stat-icon">🖱️</div>
-          <div class="stat-number">--</div>
-          <div class="stat-label">鼠标轨迹</div>
-          <div class="stat-mode">默认模式</div>
-          <div class="stat-progress">
-            <div class="progress-bar">
-              <div class="progress-fill" style="width: 0%"></div>
-            </div>
-          </div>
-        </div>
+        
         <div class="stat-card" id="stat-reaction">
           <div class="stat-icon">⚡</div>
           <div class="stat-number">--</div>
@@ -118,27 +108,7 @@
         </div>
       </div>
       
-      <!-- 今日游戏统计 -->
-      <div class="daily-stats">
-        <h3>今日游戏统计</h3>
-        <div class="daily-stats-grid">
-          <div class="daily-stat-item">
-            <div class="daily-stat-icon">🎮</div>
-            <div class="daily-stat-number" id="today-games">0</div>
-            <div class="daily-stat-label">游戏次数</div>
-          </div>
-          <div class="daily-stat-item">
-            <div class="daily-stat-icon">⏰</div>
-            <div class="daily-stat-number" id="today-time">0</div>
-            <div class="daily-stat-label">游戏时长(分钟)</div>
-          </div>
-          <div class="daily-stat-item">
-            <div class="daily-stat-icon">🏆</div>
-            <div class="daily-stat-number" id="today-best">--</div>
-            <div class="daily-stat-label">最佳成绩</div>
-          </div>
-        </div>
-      </div>
+      
     </section>
 
     <!-- 游戏部分 -->
@@ -155,7 +125,7 @@
           <select id="difficulty-filter" class="filter-select">
             <option value="all">全部难度</option>
             <option value="easy">简单 (3秒挑战、反应测试)</option>
-            <option value="medium">中等 (鼠标轨迹、数字拼图)</option>
+            <option value="medium">中等 (数字拼图)</option>
             <option value="hard">困难 (图片拼图)</option>
           </select>
         </div>
@@ -229,8 +199,7 @@
     </section>
   </main>
 
-  <!-- 拼图游戏视图 -->
-  <div id="puzzle-view" style="display:none"></div>
+  
 
   <!-- 页脚 -->
   <footer class="footer">
@@ -240,7 +209,7 @@
         <p>让工作更有趣，让生活更轻松</p>
       </div>
       <div class="footer-section">
-        <h4>快速链接</h4>
+        <h4>快速链接</h4> 
         <a href="#" class="footer-link" data-section="home">首页</a>
         <a href="#" class="footer-link" data-section="games">游戏</a>
         <a href="#" class="footer-link" data-section="about">关于</a>
@@ -249,9 +218,22 @@
         <h4>联系方式</h4>
         <p>如有问题或建议，欢迎反馈</p>
         <div class="social-links">
-          <a href="#" class="social-link">📧</a>
-          <a href="#" class="social-link">🐦</a>
-          <a href="#" class="social-link">💬</a>
+          <a href="javascript:void(0)" class="social-link icon-email" aria-label="Email" role="button">
+            <div class="contact-tooltip">
+              <div class="contact-tooltip-row">
+                <span class="contact-text" data-copy="rainoon77@gmail.com">rainoon77@gmail.com</span>
+                <button class="contact-copy-btn" type="button" data-copy="rainoon77@gmail.com" aria-label="复制" title="复制"></button>
+              </div>
+            </div>
+          </a>
+          <a href="javascript:void(0)" class="social-link icon-wechat" aria-label="WeChat" role="button">
+            <div class="contact-tooltip">
+              <div class="contact-tooltip-row">
+                <span class="contact-text" data-copy="Rain00N">Rain00N</span>
+                <button class="contact-copy-btn" type="button" data-copy="Rain00N" aria-label="复制" title="复制"></button>
+              </div>
+            </div>
+          </a>
         </div>
       </div>
     </div>
@@ -262,7 +244,7 @@
 
   <script src="gravity-balls.js"></script>
   <script src="main.js"></script>
-  <script src="puzzle.js"></script>
+  
   <script src="game-history.js"></script>
   <script src="history-modal.js"></script>
 </body>

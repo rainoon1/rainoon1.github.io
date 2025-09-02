@@ -101,10 +101,10 @@ function renderOffWorkTimeInput() {
 
 // 统计功能 - 显示四个游戏默认模式下的成绩
 function updateStats() {
-  const games = ['number_puzzle', 'image_puzzle', 'stopwatch', 'mouse', 'reaction'];
-  const gameNames = ['数字拼图', '图片拼图', '3秒挑战', '鼠标轨迹', '反应测试'];
-  const gameIcons = ['🧩', '🖼️', '⏱️', '🖱️', '⚡'];
-  const gameModes = ['3×3数字拼图', '4×4图片拼图', '3秒动态秒表', '默认模式', '挑战1次'];
+  const games = ['number_puzzle', 'image_puzzle', 'stopwatch', 'reaction'];
+  const gameNames = ['数字拼图', '图片拼图', '3秒挑战', '反应测试'];
+  const gameIcons = ['🧩', '🖼️', '⏱️', '⚡'];
+  const gameModes = ['3×3数字拼图', '3×3图片拼图', '3秒动态秒表', '挑战1次'];
   
   games.forEach((game, index) => {
     let score = '--';
@@ -112,7 +112,8 @@ function updateStats() {
     // 从 gameHistoryManager 获取成绩
     if (window.gameHistoryManager) {
       try {
-        const bestScore = window.gameHistoryManager.getGameBestScoreCompatible(game, 'default');
+        const displayDifficulty = getDisplayDifficultyForGame(game);
+        const bestScore = window.gameHistoryManager.getGameBestScoreCompatible(game, displayDifficulty);
         if (bestScore !== null) {
           score = bestScore;
         }
@@ -135,10 +136,6 @@ function updateStats() {
         case 'stopwatch':
           // 3秒挑战显示误差值（毫秒级）
           score = `${Math.round(score)}ms`;
-          break;
-        case 'mouse':
-          // 鼠标轨迹显示完成度
-          score = `${score}%`;
           break;
         case 'reaction':
           // 反应测试显示反应时间（毫秒级，精度到毫秒）
@@ -172,9 +169,6 @@ function updateStats() {
           case 'stopwatch':
             gameUrl = 'games/stopwatch/stopwatch.html';
             break;
-          case 'mouse':
-            gameUrl = 'games/mouse/mouse.html';
-            break;
           case 'reaction':
             gameUrl = 'games/reaction/reaction.html';
             break;
@@ -201,28 +195,10 @@ function updateStats() {
   updateStatProgress();
 }
 
-function recordGamePlay(gameKey, duration = 0) {
-  const today = new Date().toDateString();
-  const stats = JSON.parse(localStorage.getItem('gameStats') || '{}');
-  
-  if (!stats[today]) {
-    stats[today] = {
-      gamesPlayed: 0,
-      totalTime: 0,
-      lastPlayed: null
-    };
-  }
-  
-  stats[today].gamesPlayed++;
-  stats[today].totalTime += duration;
-  stats[today].lastPlayed = new Date().toISOString();
-  
-  localStorage.setItem('gameStats', JSON.stringify(stats));
-  updateStats();
-}
+// 已移除：recordGamePlay 与每日统计逻辑
 
 function getBestScore() {
-  const games = ['number_puzzle', 'image_puzzle', 'stopwatch', 'mouse', 'reaction'];
+  const games = ['number_puzzle', 'image_puzzle', 'stopwatch', 'reaction'];
   let best = '--';
   let bestGame = '';
   
@@ -232,7 +208,8 @@ function getBestScore() {
     // 从新格式获取成绩
     if (window.gameHistoryManager) {
       try {
-        score = window.gameHistoryManager.getGameBestScoreCompatible(game, 'default');
+        const displayDifficulty = getDisplayDifficultyForGame(game);
+        score = window.gameHistoryManager.getGameBestScoreCompatible(game, displayDifficulty);
       } catch (e) {
         console.log(`无法从 gameHistoryManager 获取 ${game} 的成绩:`, e);
       }
@@ -258,14 +235,7 @@ function getBestScore() {
             bestGame = game;
           }
           break;
-        case 'mouse':
-          // 鼠标轨迹：完成度，越大越好，但这里我们找最小的（100-完成度）
-          const mouseScore = 100 - normalizedScore;
-          if (best === '--' || mouseScore < parseFloat(best)) {
-            best = score;
-            bestGame = game;
-          }
-          break;
+        
         case 'reaction':
           // 反应测试：反应时间，越小越好
           if (best === '--' || normalizedScore < parseFloat(best)) {
@@ -362,17 +332,7 @@ const games = [
     estimatedTime: '1-2分钟',
     tags: ['反应', '时间感知']
   },
-  { 
-    key: 'mouse', 
-    name: '鼠标轨迹', 
-    icon: '🖱️', 
-    best: null, 
-    description: '锻炼你的鼠标控制技巧',
-    difficulty: 'medium',
-    category: 'skill',
-    estimatedTime: '2-3分钟',
-    tags: ['技巧', '鼠标控制']
-  },
+  
   { 
     key: 'reaction', 
     name: '反应测试', 
@@ -386,12 +346,25 @@ const games = [
   },
 ];
 
+// 为统计展示选择默认难度
+function getDisplayDifficultyForGame(gameKey) {
+  switch (gameKey) {
+    case 'number_puzzle':
+      return '3x3';
+    case 'image_puzzle':
+      return '3x3';
+    default:
+      return 'default';
+  }
+}
+
 function loadBestScores() {
   games.forEach(g => {
     // 从新格式获取最佳成绩
     if (window.gameHistoryManager) {
       try {
-        const bestScore = window.gameHistoryManager.getGameBestScoreCompatible(g.key, 'default');
+        const displayDifficulty = getDisplayDifficultyForGame(g.key);
+        const bestScore = window.gameHistoryManager.getGameBestScoreCompatible(g.key, displayDifficulty);
         if (bestScore !== null) {
           g.best = bestScore;
           return;
@@ -408,7 +381,7 @@ function loadBestScores() {
 function renderGameHall() {
   loadBestScores();
   const hall = document.querySelector('.game-hall');
-  const gameModes = ['3×3数字拼图', '4×4图片拼图', '3秒动态秒表', '默认模式', '挑战1次'];
+  const gameModes = ['3×3数字拼图', '3×3图片拼图', '3秒动态秒表', '挑战1次'];
   
   // 获取筛选条件
   const difficultyFilter = document.getElementById('difficulty-filter')?.value || 'all';
@@ -426,7 +399,7 @@ function renderGameHall() {
     if (g.key === 'number_puzzle') href = 'games/number-puzzle/number-puzzle.html';
     else if (g.key === 'image_puzzle') href = 'games/image-puzzle/image-puzzle.html';
     else if (g.key === 'stopwatch') href = 'games/stopwatch/stopwatch.html';
-    else if (g.key === 'mouse') href = 'games/mouse/mouse.html';
+    
     else if (g.key === 'reaction') href = 'games/reaction/reaction.html';
     
     // 格式化成绩显示
@@ -444,9 +417,7 @@ function renderGameHall() {
         case 'stopwatch':
           formattedScore = `${Math.round(g.best)}ms`;
           break;
-        case 'mouse':
-          formattedScore = `${g.best}%`;
-          break;
+        
         case 'reaction':
           // 反应测试精度到毫秒级
           formattedScore = `${Math.round(g.best)}ms`;
@@ -500,75 +471,11 @@ function renderGameHall() {
 }
 
 // 更新今日统计
-function updateDailyStats() {
-  const today = new Date().toDateString();
-  const stats = JSON.parse(localStorage.getItem('gameStats') || '{}');
-  const todayStats = stats[today] || { gamesPlayed: 0, totalTime: 0 };
-  
-  document.getElementById('today-games').textContent = todayStats.gamesPlayed;
-  document.getElementById('today-time').textContent = Math.round(todayStats.totalTime / 60);
-  
-  // 获取今日最佳成绩
-  const games = ['number_puzzle', 'image_puzzle', 'stopwatch', 'mouse', 'reaction'];
-  let bestScore = '--';
-  let bestGame = '';
-  
-  games.forEach(game => {
-    let score = null;
-    
-    // 从新格式获取成绩
-    if (window.gameHistoryManager) {
-      try {
-        score = window.gameHistoryManager.getGameBestScoreCompatible(game, 'default');
-      } catch (e) {
-        console.log(`无法从 gameHistoryManager 获取 ${game} 的成绩:`, e);
-      }
-    }
-    
-    if (score !== null && score !== '--') {
-      if (bestScore === '--' || score < parseFloat(bestScore)) {
-        bestScore = score;
-        bestGame = game;
-      }
-    }
-  });
-  
-  if (bestScore !== '--') {
-    const gameNames = { 
-      number_puzzle: '数字拼图', 
-      image_puzzle: '图片拼图',
-      stopwatch: '3秒挑战', 
-      mouse: '鼠标轨迹', 
-      reaction: '反应测试' 
-    };
-    
-    // 根据游戏类型添加单位
-    let formattedScore = bestScore;
-    switch (bestGame) {
-      case 'number_puzzle':
-      case 'image_puzzle':
-        // 拼图游戏只保留秒级
-        formattedScore = `${Math.round(bestScore)}秒`;
-        break;
-      case 'stopwatch':
-        formattedScore = `${Math.round(bestScore)}ms`;
-        break;
-      case 'mouse':
-        formattedScore = `${bestScore}%`;
-        break;
-      case 'reaction':
-        // 反应测试精度到毫秒级
-        formattedScore = `${Math.round(bestScore)}ms`;
-        break;
-    }
-    
-    document.getElementById('today-best').textContent = `${gameNames[bestGame]} ${formattedScore}`;
-  }
-}
+// 已移除：updateDailyStats 与相关 DOM 更新
 
 // 更新统计卡片进度条
 function updateStatProgress() {
-  const games = ['number_puzzle', 'image_puzzle', 'stopwatch', 'mouse', 'reaction'];
+  const games = ['number_puzzle', 'image_puzzle', 'stopwatch', 'reaction'];
   
   games.forEach(game => {
     let score = null;
@@ -576,7 +483,8 @@ function updateStatProgress() {
     // 从新格式获取最佳成绩
     if (window.gameHistoryManager) {
       try {
-        score = window.gameHistoryManager.getGameBestScoreCompatible(game, 'default');
+        const displayDifficulty = getDisplayDifficultyForGame(game);
+        score = window.gameHistoryManager.getGameBestScoreCompatible(game, displayDifficulty);
       } catch (e) {
         console.log(`无法从 gameHistoryManager 获取 ${game} 的成绩:`, e);
       }
@@ -600,10 +508,6 @@ function updateStatProgress() {
           // 3秒挑战（简单难度）：误差越小越好，假设300ms为满分
           progress = Math.max(0, Math.min(100, (300 - score) / 300 * 100));
           break;
-        case 'mouse':
-          // 鼠标轨迹（中等难度）：完成度越高越好
-          progress = Math.min(100, score);
-          break;
         case 'reaction':
           // 反应测试（简单难度）：时间越短越好，假设150ms为满分
           progress = Math.max(0, Math.min(100, (150 - score) / 150 * 100));
@@ -619,11 +523,11 @@ function initPage() {
   updateCountdown();
   renderOffWorkTimeInput();
   updateStats();
-  updateDailyStats();
   updateStatProgress();
   initNavigation();
   initGameFilters();
   initThemeToggle();
+  initContactCopy();
   showSection('home');
   
   // 设置定时器
@@ -727,33 +631,65 @@ function addInteractiveEffects() {
   });
 }
 
-// 显示视图函数（保持兼容性）
-function showView(view) {
-  if (view === 'puzzle') {
-    document.getElementById('puzzle-view').style.display = 'block';
-    document.querySelector('.main-content').style.display = 'none';
-    if (window.renderPuzzleView) window.renderPuzzleView();
-  } else {
-    document.getElementById('puzzle-view').style.display = 'none';
-    document.querySelector('.main-content').style.display = 'block';
-  }
-}
-
-function handleHashChange() {
-  if (location.hash === '#puzzle') {
-    showView('puzzle');
-  } else {
-    showView('hall');
-  }
+// 联系方式复制功能
+function initContactCopy() {
+  // 事件委托处理复制
+  document.body.addEventListener('click', async (e) => {
+    const target = e.target;
+    if (target && target.classList && (target.classList.contains('contact-copy-btn') || target.classList.contains('icon-email') || target.classList.contains('icon-wechat'))) {
+      // Determine text to copy
+      let text = target.getAttribute('data-copy');
+      if (!text) {
+        // Try to find sibling tooltip text
+        const link = target.closest('.social-link');
+        const tooltipTextEl = link && link.querySelector('.contact-text');
+        text = tooltipTextEl ? tooltipTextEl.getAttribute('data-copy') : '';
+      }
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        // show copied feedback on button if available, otherwise on link via temporary ripple
+        const btn = target.classList.contains('contact-copy-btn') ? target : (target.closest('.social-link')?.querySelector('.contact-copy-btn'));
+        if (btn) {
+          btn.classList.add('copied');
+          btn.disabled = true;
+          setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.disabled = false;
+          }, 1200);
+        }
+        setTimeout(() => {
+          // no-op; handled above
+        }, 1200);
+      } catch (err) {
+        // 兼容性降级：创建临时输入框复制
+        const temp = document.createElement('textarea');
+        temp.value = text || '';
+        document.body.appendChild(temp);
+        temp.select();
+        try { document.execCommand('copy'); } catch {}
+        document.body.removeChild(temp);
+        const btn = target.classList.contains('contact-copy-btn') ? target : (target.closest('.social-link')?.querySelector('.contact-copy-btn'));
+        if (btn) {
+          btn.classList.add('copied');
+          btn.disabled = true;
+          setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.disabled = false;
+          }, 1200);
+        }
+        setTimeout(() => {
+          // no-op; handled above
+        }, 1200);
+      }
+    }
+  });
 }
 
 // 事件监听器
 window.addEventListener('DOMContentLoaded', () => {
   initPage();
-  handleHashChange();
 });
-
-window.addEventListener('hashchange', handleHashChange);
 
 // 初始化游戏历史管理器
 function initGameHistory() {
@@ -772,5 +708,4 @@ function initGameHistory() {
 }
 
 // 导出函数供其他模块使用
-window.recordGamePlay = recordGamePlay;
 window.updateStats = updateStats; 

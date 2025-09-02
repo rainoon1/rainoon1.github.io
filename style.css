@@ -382,63 +382,7 @@ body.dark-theme .theme-toggle:hover {
   box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
 }
 
-/* 今日统计样式 */
-.daily-stats {
-  margin-top: 40px;
-  max-width: 900px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.daily-stats h3 {
-  color: white;
-  text-align: center;
-  font-size: 1.8em;
-  margin-bottom: 25px;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.daily-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-}
-
-.daily-stat-item {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-radius: 15px;
-  padding: 25px;
-  text-align: center;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  color: white;
-}
-
-.daily-stat-item:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-}
-
-.daily-stat-icon {
-  font-size: 2em;
-  margin-bottom: 10px;
-}
-
-.daily-stat-number {
-  font-size: 2.2em;
-  font-weight: bold;
-  color: #fff;
-  margin-bottom: 8px;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-}
-
-.daily-stat-label {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.9em;
-  font-weight: 500;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
+/* 已移除：今日统计样式块 */
 
 /* 区域标题 */
 .section-header {
@@ -860,14 +804,104 @@ body.dark-theme .filter-select option {
 
 .social-link {
   display: inline-block;
-  font-size: 1.5em;
-  color: rgba(255, 255, 255, 0.8);
-  transition: transform 0.3s ease;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .social-link:hover {
   transform: scale(1.2);
-  color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25);
+}
+
+/* Email & WeChat icons (SVG data URIs) */
+.icon-email {
+  background: rgba(255, 255, 255, 0.1) center/60% no-repeat;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M4 4h16v16H4z' fill='none'/><path d='M22 6l-10 7L2 6'/></svg>");
+}
+
+.icon-wechat {
+  background: rgba(255, 255, 255, 0.1) center/70% no-repeat;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48' fill='white'><path d='M30.5 8C23.596 8 18 12.477 18 18c0 1.35.288 2.645.82 3.85C16.837 22.257 15 21.5 13 21.5 7.477 21.5 3 25.313 3 30c0 2.453 1.137 4.676 3 6.35-.26 1.266-1.205 2.86-2.5 4.15 2.6-.2 5.05-1.017 6.8-1.85 1.491.537 3.125.85 4.85.85 6.904 0 12.5-4.477 12.5-10 0-1.35-.288-2.645-.82-3.85C29.163 24.243 31 25 33 25c5.523 0 10-3.813 10-8.5 0-2.453-1.137-4.676-3-6.35.26-1.266 1.205-2.86 2.5-4.15-2.6.2-5.05 1.017-6.8 1.85-1.491-.537-3.125-.85-4.85-.85zM11.5 28a2 2 0 110-4 2 2 0 010 4zm7 0a2 2 0 110-4 2 2 0 010 4zm10-10a2 2 0 110-4 2 2 0 010 4zm7 0a2 2 0 110-4 2 2 0 010 4z'/></svg>");
+}
+
+/* Tooltip container that can be hovered and selected */
+.contact-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: 120%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  display: none;
+  z-index: 10;
+  min-width: 180px;
+}
+
+.contact-tooltip::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid rgba(0,0,0,0.85);
+}
+
+.contact-tooltip-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.contact-text {
+  user-select: text;
+  -webkit-user-select: text;
+  -ms-user-select: text;
+  white-space: nowrap;
+}
+
+.contact-copy-btn {
+  background: #667eea;
+  border: none;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  cursor: pointer;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 16px 16px;
+  /* clipboard icon */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='9' y='9' width='13' height='13' rx='2' ry='2'></rect><path d='M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'></path></svg>");
+}
+
+.contact-copy-btn:hover {
+  background-color: #5a6fd8;
+}
+
+.contact-copy-btn.copied {
+  background-color: #22c55e;
+  /* check icon */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='M20 6L9 17l-5-5'/></svg>");
+}
+
+/* Show tooltip when icon is hovered OR when tooltip itself is hovered */
+.social-link:hover .contact-tooltip,
+.contact-tooltip:hover {
+  display: block;
 }
 
 .footer-bottom {
@@ -1022,18 +1056,7 @@ body.dark-theme .filter-select option {
     gap: 15px;
   }
   
-  .daily-stats-grid {
-    grid-template-columns: 1fr;
-    gap: 15px;
-  }
-  
-  .daily-stat-item {
-    padding: 20px;
-  }
-  
-  .daily-stat-number {
-    font-size: 1.8em;
-  }
+  /* 已移除：移动端的今日统计样式 */
 }
 
 @media (max-width: 480px) {
